@@ -1,0 +1,68 @@
+---
+- name: Create VM directory
+  ansible.builtin.file:
+    path: "{{ lab_dir }}/{{ vm.name }}"
+    state: directory
+    mode: '0755'
+- name: Create root overlay without altering existing disks
+  ansible.builtin.command:
+    argv: [qemu-img, create, -f, qcow2, -F, qcow2, -b, "{{ lab_dir }}/debian-13.qcow2", "{{ lab_dir }}/{{ vm.name }}/root.qcow2", "{{ lab_root_disk_gb }}G"]
+    creates: "{{ lab_dir }}/{{ vm.name }}/root.qcow2"
+- name: Create blank RAID disks
+  ansible.builtin.command:
+    argv: [qemu-img, create, -f, qcow2, "{{ lab_dir }}/{{ vm.name }}/data{{ item }}.qcow2", "{{ lab_data_disk_gb }}G"]
+    creates: "{{ lab_dir }}/{{ vm.name }}/data{{ item }}.qcow2"
+  loop: "{{ range(1, vm.data_disks + 1) | list }}"
+- name: Render NoCloud configuration
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ lab_dir }}/{{ vm.name }}/{{ item }}"
+    mode: '0644'
+  loop: [user-data, meta-data, network-config]
+- name: Create first-boot seed
+  ansible.builtin.command:
+    argv:
+      - cloud-localds
+      - "--network-config={{ lab_dir }}/{{ vm.name }}/network-config"
+      - "{{ lab_dir }}/{{ vm.name }}/seed.iso"
+      - "{{ lab_dir }}/{{ vm.name }}/user-data"
+      - "{{ lab_dir }}/{{ vm.name }}/meta-data"
+    creates: "{{ lab_dir }}/{{ vm.name }}/seed.iso"
+- name: Read defined domains
+  ansible.builtin.command: virsh list --all --name
+  changed_when: false
+  register: vm_domains
+- name: Read existing domain UUID
+  ansible.builtin.command: "virsh domuuid {{ vm.name }}"
+  register: vm_existing_uuid
+  changed_when: false
+  when: vm.name in vm_domains.stdout_lines
+- name: Preserve domain identity across updates
+  ansible.builtin.set_fact:
+    vm_uuid: "{{ vm_existing_uuid.stdout if vm.name in vm_domains.stdout_lines else (vm.name | to_uuid) }}"
+- name: Render domain definition
+  ansible.builtin.template:
+    src: domain.xml.j2
+    dest: "{{ lab_dir }}/{{ vm.name }}/domain.xml"
+    mode: '0644'
+  register: vm_domain_xml
+- name: Define domain
+  ansible.builtin.command: "virsh define {{ lab_dir }}/{{ vm.name }}/domain.xml"
+  when: vm_domain_xml.changed or vm.name not in vm_domains.stdout_lines
+  changed_when: true
+- name: Read running domains
+  ansible.builtin.command: virsh list --name
+  changed_when: false
+  register: vm_running_domains
+- name: Start domain
+  ansible.builtin.command: "virsh start {{ vm.name }}"
+  when: vm.name not in vm_running_domains.stdout_lines
+  changed_when: true
+- name: Read autostart domains
+  ansible.builtin.command: virsh list --all --autostart --name
+  changed_when: false
+  register: vm_autostart_domains
+- name: Autostart domain
+  ansible.builtin.command: "virsh autostart {{ vm.name }}"
+  when: vm.name not in vm_autostart_domains.stdout_lines
+  changed_when: true

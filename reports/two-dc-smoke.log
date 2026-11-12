@@ -1,0 +1,372 @@
+
+PLAY [Verify two-DC outage and automatic recovery] *****************************
+
+TASK [Discover guest inventory] ************************************************
+included: /home/kirill/ucheba/sis_admin/playbooks/inventory.yml for lab
+
+TASK [Register guest connections through hypervisor] ***************************
+ok: [lab] => (item=g2-router)
+ok: [lab] => (item=g2-ch1r1)
+ok: [lab] => (item=g2-ch1r2)
+ok: [lab] => (item=g2-ch2r1)
+ok: [lab] => (item=g2-ch2r2)
+ok: [lab] => (item=g2-ch3r1)
+ok: [lab] => (item=g2-ch3r2)
+ok: [lab] => (item=g2-zk1)
+ok: [lab] => (item=g2-zk2)
+ok: [lab] => (item=g2-zk3)
+ok: [lab] => (item=g2-load)
+
+TASK [Record running domains before experiment] ********************************
+ok: [lab]
+
+TASK [Require all lab guests to be running for this smoke test] ****************
+ok: [lab] => (item=g2-router) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 0,
+        "dc": "wan",
+        "ip": "172.30.2.2",
+        "memory": 512,
+        "name": "g2-router",
+        "nics": [
+            {
+                "ip": "172.30.2.2",
+                "mac": "52:54:00:22:00:01",
+                "name": "wan0",
+                "network": "wan"
+            },
+            {
+                "ip": "10.22.1.1",
+                "mac": "52:54:00:22:00:02",
+                "name": "dc1",
+                "network": "dc1"
+            },
+            {
+                "ip": "10.22.2.1",
+                "mac": "52:54:00:22:00:03",
+                "name": "dc2",
+                "network": "dc2"
+            },
+            {
+                "ip": "10.22.3.1",
+                "mac": "52:54:00:22:00:04",
+                "name": "dc3",
+                "network": "dc3"
+            }
+        ],
+        "role": "router",
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=g2-ch1r1) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 4,
+        "dc": "dc1",
+        "ip": "10.22.1.11",
+        "memory": 1024,
+        "name": "g2-ch1r1",
+        "nics": [
+            {
+                "ip": "10.22.1.11",
+                "mac": "52:54:00:22:00:11",
+                "name": "dc1",
+                "network": "dc1"
+            }
+        ],
+        "raid_level": 10,
+        "replica": 1,
+        "role": "clickhouse",
+        "shard": 1,
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=g2-ch1r2) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 4,
+        "dc": "dc2",
+        "ip": "10.22.2.11",
+        "memory": 1024,
+        "name": "g2-ch1r2",
+        "nics": [
+            {
+                "ip": "10.22.2.11",
+                "mac": "52:54:00:22:00:12",
+                "name": "dc2",
+                "network": "dc2"
+            }
+        ],
+        "raid_level": 10,
+        "replica": 2,
+        "role": "clickhouse",
+        "shard": 1,
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=g2-ch2r1) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 4,
+        "dc": "dc2",
+        "ip": "10.22.2.12",
+        "memory": 1024,
+        "name": "g2-ch2r1",
+        "nics": [
+            {
+                "ip": "10.22.2.12",
+                "mac": "52:54:00:22:00:13",
+                "name": "dc2",
+                "network": "dc2"
+            }
+        ],
+        "raid_level": 5,
+        "replica": 1,
+        "role": "clickhouse",
+        "shard": 2,
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=g2-ch2r2) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 4,
+        "dc": "dc3",
+        "ip": "10.22.3.12",
+        "memory": 1024,
+        "name": "g2-ch2r2",
+        "nics": [
+            {
+                "ip": "10.22.3.12",
+                "mac": "52:54:00:22:00:14",
+                "name": "dc3",
+                "network": "dc3"
+            }
+        ],
+        "raid_level": 5,
+        "replica": 2,
+        "role": "clickhouse",
+        "shard": 2,
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=g2-ch3r1) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 4,
+        "dc": "dc3",
+        "ip": "10.22.3.13",
+        "memory": 1024,
+        "name": "g2-ch3r1",
+        "nics": [
+            {
+                "ip": "10.22.3.13",
+                "mac": "52:54:00:22:00:15",
+                "name": "dc3",
+                "network": "dc3"
+            }
+        ],
+        "raid_level": 6,
+        "replica": 1,
+        "role": "clickhouse",
+        "shard": 3,
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=g2-ch3r2) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 4,
+        "dc": "dc1",
+        "ip": "10.22.1.13",
+        "memory": 1024,
+        "name": "g2-ch3r2",
+        "nics": [
+            {
+                "ip": "10.22.1.13",
+                "mac": "52:54:00:22:00:16",
+                "name": "dc1",
+                "network": "dc1"
+            }
+        ],
+        "raid_level": 6,
+        "replica": 2,
+        "role": "clickhouse",
+        "shard": 3,
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=g2-zk1) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 0,
+        "dc": "dc1",
+        "ip": "10.22.1.21",
+        "memory": 512,
+        "name": "g2-zk1",
+        "nics": [
+            {
+                "ip": "10.22.1.21",
+                "mac": "52:54:00:22:00:17",
+                "name": "dc1",
+                "network": "dc1"
+            }
+        ],
+        "role": "zookeeper",
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=g2-zk2) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 0,
+        "dc": "dc2",
+        "ip": "10.22.2.21",
+        "memory": 512,
+        "name": "g2-zk2",
+        "nics": [
+            {
+                "ip": "10.22.2.21",
+                "mac": "52:54:00:22:00:18",
+                "name": "dc2",
+                "network": "dc2"
+            }
+        ],
+        "role": "zookeeper",
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=g2-zk3) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 0,
+        "dc": "dc3",
+        "ip": "10.22.3.21",
+        "memory": 512,
+        "name": "g2-zk3",
+        "nics": [
+            {
+                "ip": "10.22.3.21",
+                "mac": "52:54:00:22:00:19",
+                "name": "dc3",
+                "network": "dc3"
+            }
+        ],
+        "role": "zookeeper",
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=g2-load) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 0,
+        "dc": "dc1",
+        "ip": "10.22.1.30",
+        "memory": 512,
+        "name": "g2-load",
+        "nics": [
+            {
+                "ip": "10.22.1.30",
+                "mac": "52:54:00:22:00:28",
+                "name": "dc1",
+                "network": "dc1"
+            }
+        ],
+        "role": "load",
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+
+TASK [Install the tested fault runner] *****************************************
+changed: [lab]
+
+TASK [Start a timed outage of dc2 and dc3] *************************************
+changed: [lab]
+
+TASK [Record the rollback timer identifier] ************************************
+ok: [lab] => {
+    "outage_result.stdout_lines": [
+        "2026-11-13T01:51:04+0300 BEGIN g2-rollback-1794523864528119682 two-dc --dc dc2 --peer dc3 --seconds 30",
+        "2026-11-13T01:51:04+0300 APPLY virsh destroy g2-ch1r2",
+        "2026-11-13T01:51:05+0300 APPLY virsh destroy g2-ch2r1",
+        "2026-11-13T01:51:05+0300 APPLY virsh destroy g2-ch2r2",
+        "2026-11-13T01:51:05+0300 APPLY virsh destroy g2-ch3r1",
+        "2026-11-13T01:51:06+0300 APPLY virsh destroy g2-zk2",
+        "2026-11-13T01:51:06+0300 APPLY virsh destroy g2-zk3",
+        "2026-11-13T01:51:07+0300 ARMED automatic rollback in 30s; unit=g2-rollback-1794523864528119682.timer"
+    ]
+}
+
+TASK [Inspect domains during outage] *******************************************
+ok: [lab]
+
+TASK [Verify exactly the selected running nodes were powered off] **************
+ok: [lab] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Wait for automatic rollback] *********************************************
+ok: [lab]
+
+TASK [Read restored domains] ***************************************************
+ok: [lab]
+
+TASK [Verify all originally running domains were restored] *********************
+ok: [lab] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+PLAY [Verify SSH recovery on every lab guest] **********************************
+
+TASK [Wait for SSH after domain startup] ***************************************
+ok: [g2-ch1r1]
+ok: [g2-router]
+ok: [g2-ch3r2]
+ok: [g2-zk1]
+ok: [g2-zk2]
+ok: [g2-zk3]
+ok: [g2-ch3r1]
+ok: [g2-ch2r2]
+ok: [g2-load]
+ok: [g2-ch2r1]
+ok: [g2-ch1r2]
+
+PLAY RECAP *********************************************************************
+g2-ch1r1                   : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-ch1r2                   : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-ch2r1                   : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-ch2r2                   : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-ch3r1                   : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-ch3r2                   : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-load                    : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-router                  : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-zk1                     : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-zk2                     : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-zk3                     : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+lab                        : ok=12   changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

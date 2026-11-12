@@ -1,0 +1,16 @@
+version: 1
+config:
+{% for nic in vm.nics %}
+  - type: physical
+    name: {{ nic.name }}
+    mac_address: '{{ nic.mac }}'
+    subnets:
+      - type: static
+        address: {{ nic.ip }}/24
+{% if vm.role != 'router' or nic.network == 'wan' %}
+        gateway: {{ '172.30.2.1' if nic.network == 'wan' else (lab_networks | selectattr('name', 'equalto', nic.network) | first).gateway }}
+{% endif %}
+{% endfor %}
+  - type: nameserver
+    address: {{ lab_dns | to_json }}
+    search: [{{ lab_domain }}]

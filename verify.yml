@@ -1,0 +1,91 @@
+---
+- name: Discover lab guests and inspect host topology
+  hosts: hypervisors
+  gather_facts: false
+  tasks:
+    - name: Add lab inventory
+      ansible.builtin.include_tasks: playbooks/inventory.yml
+    - name: Inspect all lab bridges
+      ansible.builtin.command: "ip -j address show dev {{ item.bridge }}"
+      loop: "{{ lab_networks }}"
+      register: bridges
+      changed_when: false
+    - name: Ensure data bridges do not have host IPv4 addresses
+      ansible.builtin.assert:
+        that: (item.stdout | from_json | first).addr_info | selectattr('family', 'equalto', 'inet') | list | length == 0
+      loop: "{{ bridges.results | rejectattr('item.name', 'equalto', 'wan') | list }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+- name: Verify guest networking and storage
+  hosts: lab_guests
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Require Debian 13
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.distribution == 'Debian'
+          - ansible_facts.distribution_major_version == '13'
+    - name: Wait for clean cloud-init completion
+      ansible.builtin.command: cloud-init status --wait
+      changed_when: false
+    - name: Check every guest is reachable from every guest
+      ansible.builtin.command: "ping -n -c 2 -W 2 {{ item.ip }}"
+      loop: "{{ lab_vms }}"
+      loop_control:
+        label: "{{ item.name }}"
+      changed_when: false
+    - name: Check corporate names
+      ansible.builtin.command: "getent hosts {{ item.name }}.{{ lab_domain }}"
+      loop: "{{ lab_vms }}"
+      loop_control:
+        label: "{{ item.name }}"
+      changed_when: false
+    - name: Check outgoing HTTPS and DNS
+      ansible.builtin.uri:
+        url: https://deb.debian.org/debian/
+        method: HEAD
+        timeout: 30
+      changed_when: false
+    - name: Inspect ClickHouse data disks
+      ansible.builtin.command: lsblk --json --bytes --output NAME,SIZE,TYPE,FSTYPE,SERIAL
+      register: disks
+      changed_when: false
+      when: vm.role == 'clickhouse'
+    - name: Validate data disk count and size
+      ansible.builtin.assert:
+        that:
+          - >-
+            (disks.stdout | from_json).blockdevices
+            | selectattr('type', 'equalto', 'disk')
+            | selectattr('serial', 'match', vm.name + '-data') | list | length == vm.data_disks
+          - >-
+            (disks.stdout | from_json).blockdevices
+            | selectattr('type', 'equalto', 'disk')
+            | selectattr('serial', 'match', vm.name + '-data')
+            | map(attribute='size') | unique | list == [lab_data_disk_gb * 1024 * 1024 * 1024]
+      when: vm.role == 'clickhouse'
+    - name: Show cross-DC path
+      ansible.builtin.command: traceroute -n -I -m 4 -w 1 10.22.2.21
+      changed_when: false
+      when: inventory_hostname == 'g2-ch1r1'
+    - name: Verify effective SSH policy
+      ansible.builtin.command: /usr/sbin/sshd -T
+      register: ssh_policy
+      changed_when: false
+    - name: Require key-only SSH
+      ansible.builtin.assert:
+        that:
+          - "'passwordauthentication no' in ssh_policy.stdout_lines"
+          - "'permitrootlogin no' in ssh_policy.stdout_lines"
+    - name: Check serial console is available
+      ansible.builtin.systemd_service:
+        name: serial-getty@ttyS0
+      register: serial_console
+      failed_when: serial_console.status.ActiveState != 'active'
+    - name: Check break-glass password is set
+      ansible.builtin.command: "passwd -S {{ lab_user }}"
+      register: console_password_status
+      changed_when: false
+      failed_when: "' P ' not in console_password_status.stdout"

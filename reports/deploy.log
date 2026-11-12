@@ -1,0 +1,1110 @@
+
+PLAY [Prepare KVM host and create virtual machines] ****************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [lab]
+
+TASK [hypervisor : Prepare private break-glass console credential on controller] ***
+ok: [lab -> localhost]
+
+TASK [hypervisor : Check KVM device] *******************************************
+ok: [lab]
+
+TASK [hypervisor : Check host requirements] ************************************
+ok: [lab] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [hypervisor : Install virtualization packages] ****************************
+ok: [lab]
+
+TASK [hypervisor : Enable libvirt] *********************************************
+ok: [lab]
+
+TASK [hypervisor : Create managed storage] *************************************
+ok: [lab]
+
+TASK [hypervisor : Download pinned Debian 13 image] ****************************
+ok: [lab]
+
+TASK [hypervisor : Read defined networks] **************************************
+ok: [lab]
+
+TASK [hypervisor : Render network definitions] *********************************
+ok: [lab] => (item={'name': 'wan', 'bridge': 'virbr-g2wan', 'cidr': '172.30.2.0/24', 'gateway': '172.30.2.1'})
+ok: [lab] => (item={'name': 'dc1', 'bridge': 'virbr-g2dc1', 'cidr': '10.22.1.0/24', 'gateway': '10.22.1.1'})
+ok: [lab] => (item={'name': 'dc2', 'bridge': 'virbr-g2dc2', 'cidr': '10.22.2.0/24', 'gateway': '10.22.2.1'})
+ok: [lab] => (item={'name': 'dc3', 'bridge': 'virbr-g2dc3', 'cidr': '10.22.3.0/24', 'gateway': '10.22.3.1'})
+
+TASK [hypervisor : Refuse silently changing existing networks] *****************
+ok: [lab] => (item=wan) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "checksum": "7f96d8e917be90251d7203c34323b1b4e6cb96e5",
+        "dest": "/var/lib/libvirt/images/itmo-g2/network-wan.xml",
+        "diff": [],
+        "failed": false,
+        "gid": 0,
+        "group": "root",
+        "invocation": {
+            "module_args": {
+                "_diff_peek": null,
+                "_original_basename": "network.xml.j2",
+                "access_time": null,
+                "access_time_format": "%Y%m%d%H%M.%S",
+                "attributes": null,
+                "dest": "/var/lib/libvirt/images/itmo-g2/network-wan.xml",
+                "follow": true,
+                "force": false,
+                "group": null,
+                "mode": "0644",
+                "modification_time": null,
+                "modification_time_format": "%Y%m%d%H%M.%S",
+                "owner": null,
+                "path": "/var/lib/libvirt/images/itmo-g2/network-wan.xml",
+                "recurse": false,
+                "selevel": null,
+                "serole": null,
+                "setype": null,
+                "seuser": null,
+                "src": null,
+                "state": "file",
+                "unsafe_writes": false
+            }
+        },
+        "item": {
+            "bridge": "virbr-g2wan",
+            "cidr": "172.30.2.0/24",
+            "gateway": "172.30.2.1",
+            "name": "wan"
+        },
+        "mode": "0644",
+        "owner": "root",
+        "path": "/var/lib/libvirt/images/itmo-g2/network-wan.xml",
+        "size": 159,
+        "state": "file",
+        "uid": 0
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=dc1) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "checksum": "4e7afd974fd999bb69f9c179a422f01b15996108",
+        "dest": "/var/lib/libvirt/images/itmo-g2/network-dc1.xml",
+        "diff": [],
+        "failed": false,
+        "gid": 0,
+        "group": "root",
+        "invocation": {
+            "module_args": {
+                "_diff_peek": null,
+                "_original_basename": "network.xml.j2",
+                "access_time": null,
+                "access_time_format": "%Y%m%d%H%M.%S",
+                "attributes": null,
+                "dest": "/var/lib/libvirt/images/itmo-g2/network-dc1.xml",
+                "follow": true,
+                "force": false,
+                "group": null,
+                "mode": "0644",
+                "modification_time": null,
+                "modification_time_format": "%Y%m%d%H%M.%S",
+                "owner": null,
+                "path": "/var/lib/libvirt/images/itmo-g2/network-dc1.xml",
+                "recurse": false,
+                "selevel": null,
+                "serole": null,
+                "setype": null,
+                "seuser": null,
+                "src": null,
+                "state": "file",
+                "unsafe_writes": false
+            }
+        },
+        "item": {
+            "bridge": "virbr-g2dc1",
+            "cidr": "10.22.1.0/24",
+            "gateway": "10.22.1.1",
+            "name": "dc1"
+        },
+        "mode": "0644",
+        "owner": "root",
+        "path": "/var/lib/libvirt/images/itmo-g2/network-dc1.xml",
+        "size": 94,
+        "state": "file",
+        "uid": 0
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=dc2) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "checksum": "b24b3e86c7c0d93848a4a5ffcd2bf1e4e6b9c8c6",
+        "dest": "/var/lib/libvirt/images/itmo-g2/network-dc2.xml",
+        "diff": [],
+        "failed": false,
+        "gid": 0,
+        "group": "root",
+        "invocation": {
+            "module_args": {
+                "_diff_peek": null,
+                "_original_basename": "network.xml.j2",
+                "access_time": null,
+                "access_time_format": "%Y%m%d%H%M.%S",
+                "attributes": null,
+                "dest": "/var/lib/libvirt/images/itmo-g2/network-dc2.xml",
+                "follow": true,
+                "force": false,
+                "group": null,
+                "mode": "0644",
+                "modification_time": null,
+                "modification_time_format": "%Y%m%d%H%M.%S",
+                "owner": null,
+                "path": "/var/lib/libvirt/images/itmo-g2/network-dc2.xml",
+                "recurse": false,
+                "selevel": null,
+                "serole": null,
+                "setype": null,
+                "seuser": null,
+                "src": null,
+                "state": "file",
+                "unsafe_writes": false
+            }
+        },
+        "item": {
+            "bridge": "virbr-g2dc2",
+            "cidr": "10.22.2.0/24",
+            "gateway": "10.22.2.1",
+            "name": "dc2"
+        },
+        "mode": "0644",
+        "owner": "root",
+        "path": "/var/lib/libvirt/images/itmo-g2/network-dc2.xml",
+        "size": 94,
+        "state": "file",
+        "uid": 0
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=dc3) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "checksum": "6e4c49071e58dffeb4fd206366e6f5f5b76589a3",
+        "dest": "/var/lib/libvirt/images/itmo-g2/network-dc3.xml",
+        "diff": [],
+        "failed": false,
+        "gid": 0,
+        "group": "root",
+        "invocation": {
+            "module_args": {
+                "_diff_peek": null,
+                "_original_basename": "network.xml.j2",
+                "access_time": null,
+                "access_time_format": "%Y%m%d%H%M.%S",
+                "attributes": null,
+                "dest": "/var/lib/libvirt/images/itmo-g2/network-dc3.xml",
+                "follow": true,
+                "force": false,
+                "group": null,
+                "mode": "0644",
+                "modification_time": null,
+                "modification_time_format": "%Y%m%d%H%M.%S",
+                "owner": null,
+                "path": "/var/lib/libvirt/images/itmo-g2/network-dc3.xml",
+                "recurse": false,
+                "selevel": null,
+                "serole": null,
+                "setype": null,
+                "seuser": null,
+                "src": null,
+                "state": "file",
+                "unsafe_writes": false
+            }
+        },
+        "item": {
+            "bridge": "virbr-g2dc3",
+            "cidr": "10.22.3.0/24",
+            "gateway": "10.22.3.1",
+            "name": "dc3"
+        },
+        "mode": "0644",
+        "owner": "root",
+        "path": "/var/lib/libvirt/images/itmo-g2/network-dc3.xml",
+        "size": 94,
+        "state": "file",
+        "uid": 0
+    },
+    "msg": "All assertions passed"
+}
+
+TASK [hypervisor : Save validated network definitions] *************************
+ok: [lab] => (item={'name': 'wan', 'bridge': 'virbr-g2wan', 'cidr': '172.30.2.0/24', 'gateway': '172.30.2.1'})
+ok: [lab] => (item={'name': 'dc1', 'bridge': 'virbr-g2dc1', 'cidr': '10.22.1.0/24', 'gateway': '10.22.1.1'})
+ok: [lab] => (item={'name': 'dc2', 'bridge': 'virbr-g2dc2', 'cidr': '10.22.2.0/24', 'gateway': '10.22.2.1'})
+ok: [lab] => (item={'name': 'dc3', 'bridge': 'virbr-g2dc3', 'cidr': '10.22.3.0/24', 'gateway': '10.22.3.1'})
+
+TASK [hypervisor : Define new networks] ****************************************
+skipping: [lab] => (item={'name': 'wan', 'bridge': 'virbr-g2wan', 'cidr': '172.30.2.0/24', 'gateway': '172.30.2.1'}) 
+skipping: [lab] => (item={'name': 'dc1', 'bridge': 'virbr-g2dc1', 'cidr': '10.22.1.0/24', 'gateway': '10.22.1.1'}) 
+skipping: [lab] => (item={'name': 'dc2', 'bridge': 'virbr-g2dc2', 'cidr': '10.22.2.0/24', 'gateway': '10.22.2.1'}) 
+skipping: [lab] => (item={'name': 'dc3', 'bridge': 'virbr-g2dc3', 'cidr': '10.22.3.0/24', 'gateway': '10.22.3.1'}) 
+skipping: [lab]
+
+TASK [hypervisor : Read running networks] **************************************
+ok: [lab]
+
+TASK [hypervisor : Start networks] *********************************************
+skipping: [lab] => (item={'name': 'wan', 'bridge': 'virbr-g2wan', 'cidr': '172.30.2.0/24', 'gateway': '172.30.2.1'}) 
+skipping: [lab] => (item={'name': 'dc1', 'bridge': 'virbr-g2dc1', 'cidr': '10.22.1.0/24', 'gateway': '10.22.1.1'}) 
+skipping: [lab] => (item={'name': 'dc2', 'bridge': 'virbr-g2dc2', 'cidr': '10.22.2.0/24', 'gateway': '10.22.2.1'}) 
+skipping: [lab] => (item={'name': 'dc3', 'bridge': 'virbr-g2dc3', 'cidr': '10.22.3.0/24', 'gateway': '10.22.3.1'}) 
+skipping: [lab]
+
+TASK [hypervisor : Read autostart networks] ************************************
+ok: [lab]
+
+TASK [hypervisor : Enable network autostart] ***********************************
+skipping: [lab] => (item={'name': 'wan', 'bridge': 'virbr-g2wan', 'cidr': '172.30.2.0/24', 'gateway': '172.30.2.1'}) 
+skipping: [lab] => (item={'name': 'dc1', 'bridge': 'virbr-g2dc1', 'cidr': '10.22.1.0/24', 'gateway': '10.22.1.1'}) 
+skipping: [lab] => (item={'name': 'dc2', 'bridge': 'virbr-g2dc2', 'cidr': '10.22.2.0/24', 'gateway': '10.22.2.1'}) 
+skipping: [lab] => (item={'name': 'dc3', 'bridge': 'virbr-g2dc3', 'cidr': '10.22.3.0/24', 'gateway': '10.22.3.1'}) 
+skipping: [lab]
+
+TASK [hypervisor : Install persistent host routes through WAN VM] **************
+ok: [lab]
+
+TASK [hypervisor : Activate host routes] ***************************************
+ok: [lab]
+
+TASK [hypervisor : Export service team inventory on controller] ****************
+ok: [lab -> localhost]
+
+TASK [hypervisor : Install timed chaos runner] *********************************
+changed: [lab]
+
+TASK [hypervisor : Install chaos topology] *************************************
+changed: [lab]
+
+TASK [hypervisor : Recover unfinished experiments after reboot] ****************
+changed: [lab]
+
+TASK [hypervisor : Enable boot recovery] ***************************************
+changed: [lab]
+
+TASK [Provision each VM] *******************************************************
+included: vm for lab => (item=g2-router)
+included: vm for lab => (item=g2-ch1r1)
+included: vm for lab => (item=g2-ch1r2)
+included: vm for lab => (item=g2-ch2r1)
+included: vm for lab => (item=g2-ch2r2)
+included: vm for lab => (item=g2-ch3r1)
+included: vm for lab => (item=g2-ch3r2)
+included: vm for lab => (item=g2-zk1)
+included: vm for lab => (item=g2-zk2)
+included: vm for lab => (item=g2-zk3)
+included: vm for lab => (item=g2-load)
+
+TASK [vm : Create VM directory] ************************************************
+ok: [lab]
+
+TASK [vm : Create root overlay without altering existing disks] ****************
+ok: [lab]
+
+TASK [vm : Create blank RAID disks] ********************************************
+skipping: [lab]
+
+TASK [vm : Render NoCloud configuration] ***************************************
+ok: [lab] => (item=user-data)
+ok: [lab] => (item=meta-data)
+ok: [lab] => (item=network-config)
+
+TASK [vm : Create first-boot seed] *********************************************
+ok: [lab]
+
+TASK [vm : Read defined vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Read existing domain UUID] ******************************************
+ok: [lab]
+
+TASK [vm : Preserve domain identity across updates] ****************************
+ok: [lab]
+
+TASK [vm : Render domain definition] *******************************************
+changed: [lab]
+
+TASK [vm : Define domain] ******************************************************
+changed: [lab]
+
+TASK [vm : Read running vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Start domain] *******************************************************
+skipping: [lab]
+
+TASK [vm : Read autostart vm_domains] ******************************************
+ok: [lab]
+
+TASK [vm : Autostart domain] ***************************************************
+skipping: [lab]
+
+TASK [vm : Create VM directory] ************************************************
+ok: [lab]
+
+TASK [vm : Create root overlay without altering existing disks] ****************
+ok: [lab]
+
+TASK [vm : Create blank RAID disks] ********************************************
+ok: [lab] => (item=1)
+ok: [lab] => (item=2)
+ok: [lab] => (item=3)
+ok: [lab] => (item=4)
+
+TASK [vm : Render NoCloud configuration] ***************************************
+ok: [lab] => (item=user-data)
+ok: [lab] => (item=meta-data)
+ok: [lab] => (item=network-config)
+
+TASK [vm : Create first-boot seed] *********************************************
+ok: [lab]
+
+TASK [vm : Read defined vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Read existing domain UUID] ******************************************
+ok: [lab]
+
+TASK [vm : Preserve domain identity across updates] ****************************
+ok: [lab]
+
+TASK [vm : Render domain definition] *******************************************
+changed: [lab]
+
+TASK [vm : Define domain] ******************************************************
+changed: [lab]
+
+TASK [vm : Read running vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Start domain] *******************************************************
+changed: [lab]
+
+TASK [vm : Read autostart vm_domains] ******************************************
+ok: [lab]
+
+TASK [vm : Autostart domain] ***************************************************
+skipping: [lab]
+
+TASK [vm : Create VM directory] ************************************************
+ok: [lab]
+
+TASK [vm : Create root overlay without altering existing disks] ****************
+ok: [lab]
+
+TASK [vm : Create blank RAID disks] ********************************************
+ok: [lab] => (item=1)
+ok: [lab] => (item=2)
+ok: [lab] => (item=3)
+ok: [lab] => (item=4)
+
+TASK [vm : Render NoCloud configuration] ***************************************
+ok: [lab] => (item=user-data)
+ok: [lab] => (item=meta-data)
+ok: [lab] => (item=network-config)
+
+TASK [vm : Create first-boot seed] *********************************************
+ok: [lab]
+
+TASK [vm : Read defined vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Read existing domain UUID] ******************************************
+ok: [lab]
+
+TASK [vm : Preserve domain identity across updates] ****************************
+ok: [lab]
+
+TASK [vm : Render domain definition] *******************************************
+changed: [lab]
+
+TASK [vm : Define domain] ******************************************************
+changed: [lab]
+
+TASK [vm : Read running vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Start domain] *******************************************************
+changed: [lab]
+
+TASK [vm : Read autostart vm_domains] ******************************************
+ok: [lab]
+
+TASK [vm : Autostart domain] ***************************************************
+skipping: [lab]
+
+TASK [vm : Create VM directory] ************************************************
+ok: [lab]
+
+TASK [vm : Create root overlay without altering existing disks] ****************
+ok: [lab]
+
+TASK [vm : Create blank RAID disks] ********************************************
+ok: [lab] => (item=1)
+ok: [lab] => (item=2)
+ok: [lab] => (item=3)
+ok: [lab] => (item=4)
+
+TASK [vm : Render NoCloud configuration] ***************************************
+ok: [lab] => (item=user-data)
+ok: [lab] => (item=meta-data)
+ok: [lab] => (item=network-config)
+
+TASK [vm : Create first-boot seed] *********************************************
+ok: [lab]
+
+TASK [vm : Read defined vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Read existing domain UUID] ******************************************
+ok: [lab]
+
+TASK [vm : Preserve domain identity across updates] ****************************
+ok: [lab]
+
+TASK [vm : Render domain definition] *******************************************
+changed: [lab]
+
+TASK [vm : Define domain] ******************************************************
+changed: [lab]
+
+TASK [vm : Read running vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Start domain] *******************************************************
+changed: [lab]
+
+TASK [vm : Read autostart vm_domains] ******************************************
+ok: [lab]
+
+TASK [vm : Autostart domain] ***************************************************
+skipping: [lab]
+
+TASK [vm : Create VM directory] ************************************************
+ok: [lab]
+
+TASK [vm : Create root overlay without altering existing disks] ****************
+ok: [lab]
+
+TASK [vm : Create blank RAID disks] ********************************************
+ok: [lab] => (item=1)
+ok: [lab] => (item=2)
+ok: [lab] => (item=3)
+ok: [lab] => (item=4)
+
+TASK [vm : Render NoCloud configuration] ***************************************
+ok: [lab] => (item=user-data)
+ok: [lab] => (item=meta-data)
+ok: [lab] => (item=network-config)
+
+TASK [vm : Create first-boot seed] *********************************************
+ok: [lab]
+
+TASK [vm : Read defined vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Read existing domain UUID] ******************************************
+ok: [lab]
+
+TASK [vm : Preserve domain identity across updates] ****************************
+ok: [lab]
+
+TASK [vm : Render domain definition] *******************************************
+changed: [lab]
+
+TASK [vm : Define domain] ******************************************************
+changed: [lab]
+
+TASK [vm : Read running vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Start domain] *******************************************************
+changed: [lab]
+
+TASK [vm : Read autostart vm_domains] ******************************************
+ok: [lab]
+
+TASK [vm : Autostart domain] ***************************************************
+skipping: [lab]
+
+TASK [vm : Create VM directory] ************************************************
+ok: [lab]
+
+TASK [vm : Create root overlay without altering existing disks] ****************
+ok: [lab]
+
+TASK [vm : Create blank RAID disks] ********************************************
+ok: [lab] => (item=1)
+ok: [lab] => (item=2)
+ok: [lab] => (item=3)
+ok: [lab] => (item=4)
+
+TASK [vm : Render NoCloud configuration] ***************************************
+ok: [lab] => (item=user-data)
+ok: [lab] => (item=meta-data)
+ok: [lab] => (item=network-config)
+
+TASK [vm : Create first-boot seed] *********************************************
+ok: [lab]
+
+TASK [vm : Read defined vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Read existing domain UUID] ******************************************
+ok: [lab]
+
+TASK [vm : Preserve domain identity across updates] ****************************
+ok: [lab]
+
+TASK [vm : Render domain definition] *******************************************
+changed: [lab]
+
+TASK [vm : Define domain] ******************************************************
+changed: [lab]
+
+TASK [vm : Read running vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Start domain] *******************************************************
+changed: [lab]
+
+TASK [vm : Read autostart vm_domains] ******************************************
+ok: [lab]
+
+TASK [vm : Autostart domain] ***************************************************
+skipping: [lab]
+
+TASK [vm : Create VM directory] ************************************************
+ok: [lab]
+
+TASK [vm : Create root overlay without altering existing disks] ****************
+ok: [lab]
+
+TASK [vm : Create blank RAID disks] ********************************************
+ok: [lab] => (item=1)
+ok: [lab] => (item=2)
+ok: [lab] => (item=3)
+ok: [lab] => (item=4)
+
+TASK [vm : Render NoCloud configuration] ***************************************
+ok: [lab] => (item=user-data)
+ok: [lab] => (item=meta-data)
+ok: [lab] => (item=network-config)
+
+TASK [vm : Create first-boot seed] *********************************************
+ok: [lab]
+
+TASK [vm : Read defined vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Read existing domain UUID] ******************************************
+ok: [lab]
+
+TASK [vm : Preserve domain identity across updates] ****************************
+ok: [lab]
+
+TASK [vm : Render domain definition] *******************************************
+changed: [lab]
+
+TASK [vm : Define domain] ******************************************************
+changed: [lab]
+
+TASK [vm : Read running vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Start domain] *******************************************************
+changed: [lab]
+
+TASK [vm : Read autostart vm_domains] ******************************************
+ok: [lab]
+
+TASK [vm : Autostart domain] ***************************************************
+skipping: [lab]
+
+TASK [vm : Create VM directory] ************************************************
+ok: [lab]
+
+TASK [vm : Create root overlay without altering existing disks] ****************
+ok: [lab]
+
+TASK [vm : Create blank RAID disks] ********************************************
+skipping: [lab]
+
+TASK [vm : Render NoCloud configuration] ***************************************
+ok: [lab] => (item=user-data)
+ok: [lab] => (item=meta-data)
+ok: [lab] => (item=network-config)
+
+TASK [vm : Create first-boot seed] *********************************************
+ok: [lab]
+
+TASK [vm : Read defined vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Read existing domain UUID] ******************************************
+ok: [lab]
+
+TASK [vm : Preserve domain identity across updates] ****************************
+ok: [lab]
+
+TASK [vm : Render domain definition] *******************************************
+changed: [lab]
+
+TASK [vm : Define domain] ******************************************************
+changed: [lab]
+
+TASK [vm : Read running vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Start domain] *******************************************************
+changed: [lab]
+
+TASK [vm : Read autostart vm_domains] ******************************************
+ok: [lab]
+
+TASK [vm : Autostart domain] ***************************************************
+skipping: [lab]
+
+TASK [vm : Create VM directory] ************************************************
+ok: [lab]
+
+TASK [vm : Create root overlay without altering existing disks] ****************
+ok: [lab]
+
+TASK [vm : Create blank RAID disks] ********************************************
+skipping: [lab]
+
+TASK [vm : Render NoCloud configuration] ***************************************
+ok: [lab] => (item=user-data)
+ok: [lab] => (item=meta-data)
+ok: [lab] => (item=network-config)
+
+TASK [vm : Create first-boot seed] *********************************************
+ok: [lab]
+
+TASK [vm : Read defined vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Read existing domain UUID] ******************************************
+ok: [lab]
+
+TASK [vm : Preserve domain identity across updates] ****************************
+ok: [lab]
+
+TASK [vm : Render domain definition] *******************************************
+changed: [lab]
+
+TASK [vm : Define domain] ******************************************************
+changed: [lab]
+
+TASK [vm : Read running vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Start domain] *******************************************************
+changed: [lab]
+
+TASK [vm : Read autostart vm_domains] ******************************************
+ok: [lab]
+
+TASK [vm : Autostart domain] ***************************************************
+skipping: [lab]
+
+TASK [vm : Create VM directory] ************************************************
+ok: [lab]
+
+TASK [vm : Create root overlay without altering existing disks] ****************
+ok: [lab]
+
+TASK [vm : Create blank RAID disks] ********************************************
+skipping: [lab]
+
+TASK [vm : Render NoCloud configuration] ***************************************
+ok: [lab] => (item=user-data)
+ok: [lab] => (item=meta-data)
+ok: [lab] => (item=network-config)
+
+TASK [vm : Create first-boot seed] *********************************************
+ok: [lab]
+
+TASK [vm : Read defined vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Read existing domain UUID] ******************************************
+ok: [lab]
+
+TASK [vm : Preserve domain identity across updates] ****************************
+ok: [lab]
+
+TASK [vm : Render domain definition] *******************************************
+changed: [lab]
+
+TASK [vm : Define domain] ******************************************************
+changed: [lab]
+
+TASK [vm : Read running vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Start domain] *******************************************************
+changed: [lab]
+
+TASK [vm : Read autostart vm_domains] ******************************************
+ok: [lab]
+
+TASK [vm : Autostart domain] ***************************************************
+skipping: [lab]
+
+TASK [vm : Create VM directory] ************************************************
+ok: [lab]
+
+TASK [vm : Create root overlay without altering existing disks] ****************
+ok: [lab]
+
+TASK [vm : Create blank RAID disks] ********************************************
+skipping: [lab]
+
+TASK [vm : Render NoCloud configuration] ***************************************
+ok: [lab] => (item=user-data)
+ok: [lab] => (item=meta-data)
+ok: [lab] => (item=network-config)
+
+TASK [vm : Create first-boot seed] *********************************************
+ok: [lab]
+
+TASK [vm : Read defined vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Read existing domain UUID] ******************************************
+ok: [lab]
+
+TASK [vm : Preserve domain identity across updates] ****************************
+ok: [lab]
+
+TASK [vm : Render domain definition] *******************************************
+changed: [lab]
+
+TASK [vm : Define domain] ******************************************************
+changed: [lab]
+
+TASK [vm : Read running vm_domains] ********************************************
+ok: [lab]
+
+TASK [vm : Start domain] *******************************************************
+changed: [lab]
+
+TASK [vm : Read autostart vm_domains] ******************************************
+ok: [lab]
+
+TASK [vm : Autostart domain] ***************************************************
+skipping: [lab]
+
+TASK [Add guests to in-memory inventory] ***************************************
+included: /home/kirill/ucheba/sis_admin/playbooks/inventory.yml for lab
+
+TASK [Register guest connections through hypervisor] ***************************
+ok: [lab] => (item=g2-router)
+ok: [lab] => (item=g2-ch1r1)
+ok: [lab] => (item=g2-ch1r2)
+ok: [lab] => (item=g2-ch2r1)
+ok: [lab] => (item=g2-ch2r2)
+ok: [lab] => (item=g2-ch3r1)
+ok: [lab] => (item=g2-ch3r2)
+ok: [lab] => (item=g2-zk1)
+ok: [lab] => (item=g2-zk2)
+ok: [lab] => (item=g2-zk3)
+ok: [lab] => (item=g2-load)
+
+PLAY [Configure WAN router first] **********************************************
+
+TASK [Wait for router SSH] *****************************************************
+ok: [g2-router]
+
+TASK [Read facts] **************************************************************
+ok: [g2-router]
+
+TASK [router : Install routing tools] ******************************************
+changed: [g2-router]
+
+TASK [router : Persist IPv4 router_forwarding] *********************************
+changed: [g2-router]
+
+TASK [router : Read current router_forwarding setting] *************************
+ok: [g2-router]
+
+TASK [router : Enable IPv4 router_forwarding] **********************************
+changed: [g2-router]
+
+TASK [router : Configure router firewall and WAN NAT] **************************
+changed: [g2-router]
+
+TASK [router : Enable router firewall] *****************************************
+changed: [g2-router]
+
+TASK [router : Apply router_forwarding rules before provisioning guests] *******
+
+RUNNING HANDLER [router : Reload router nftables] ******************************
+changed: [g2-router]
+
+TASK [router : Install timed chaos runner] *************************************
+changed: [g2-router]
+
+TASK [router : Install chaos topology] *****************************************
+changed: [g2-router]
+
+PLAY [Configure Debian guests] *************************************************
+
+TASK [Wait for guest SSH] ******************************************************
+ok: [g2-router]
+ok: [g2-ch1r2]
+ok: [g2-ch2r1]
+ok: [g2-ch2r2]
+ok: [g2-ch1r1]
+ok: [g2-ch3r1]
+ok: [g2-zk2]
+ok: [g2-zk1]
+ok: [g2-ch3r2]
+ok: [g2-zk3]
+ok: [g2-load]
+
+TASK [Read facts] **************************************************************
+ok: [g2-ch2r1]
+ok: [g2-router]
+ok: [g2-ch1r2]
+ok: [g2-ch1r1]
+ok: [g2-ch2r2]
+ok: [g2-ch3r1]
+ok: [g2-zk2]
+ok: [g2-zk3]
+ok: [g2-ch3r2]
+ok: [g2-zk1]
+ok: [g2-load]
+
+TASK [guest : Verify required guest OS] ****************************************
+ok: [g2-router] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch1r1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch1r2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch2r1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch2r2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch3r2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch3r1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-zk1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-zk2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-zk3] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-load] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [guest : Install base network and management tools] ***********************
+changed: [g2-router]
+changed: [g2-ch2r2]
+changed: [g2-ch2r1]
+changed: [g2-ch1r2]
+changed: [g2-ch1r1]
+changed: [g2-ch3r1]
+changed: [g2-zk2]
+changed: [g2-ch3r2]
+changed: [g2-zk1]
+changed: [g2-zk3]
+changed: [g2-load]
+
+TASK [guest : Enable guest agent and time synchronization] *********************
+changed: [g2-ch1r2] => (item=qemu-guest-agent)
+changed: [g2-ch1r1] => (item=qemu-guest-agent)
+changed: [g2-ch2r1] => (item=qemu-guest-agent)
+changed: [g2-ch2r2] => (item=qemu-guest-agent)
+changed: [g2-router] => (item=qemu-guest-agent)
+ok: [g2-ch1r2] => (item=chrony)
+ok: [g2-ch1r1] => (item=chrony)
+ok: [g2-ch2r2] => (item=chrony)
+ok: [g2-ch2r1] => (item=chrony)
+ok: [g2-router] => (item=chrony)
+changed: [g2-ch3r1] => (item=qemu-guest-agent)
+changed: [g2-ch3r2] => (item=qemu-guest-agent)
+changed: [g2-zk2] => (item=qemu-guest-agent)
+changed: [g2-zk1] => (item=qemu-guest-agent)
+changed: [g2-zk3] => (item=qemu-guest-agent)
+ok: [g2-ch3r2] => (item=chrony)
+ok: [g2-ch3r1] => (item=chrony)
+ok: [g2-zk3] => (item=chrony)
+ok: [g2-zk1] => (item=chrony)
+ok: [g2-zk2] => (item=chrony)
+changed: [g2-load] => (item=qemu-guest-agent)
+ok: [g2-load] => (item=chrony)
+
+TASK [guest : Provide temporary corporate name resolution] *********************
+[WARNING]: Module remote_tmp /root/.ansible/tmp did not exist and was created with a mode of 0700, this may cause issues when running as another user. To avoid this, create the remote_tmp dir with the correct permissions manually
+changed: [g2-ch2r2]
+changed: [g2-router]
+changed: [g2-ch1r1]
+changed: [g2-ch1r2]
+changed: [g2-ch2r1]
+changed: [g2-ch3r1]
+changed: [g2-ch3r2]
+changed: [g2-zk2]
+changed: [g2-zk1]
+changed: [g2-zk3]
+changed: [g2-load]
+
+TASK [guest : Restrict ZooKeeper ports to cluster and monitoring sources] ******
+skipping: [g2-router]
+skipping: [g2-ch1r1]
+skipping: [g2-ch1r2]
+skipping: [g2-ch2r1]
+skipping: [g2-ch2r2]
+skipping: [g2-ch3r1]
+skipping: [g2-ch3r2]
+skipping: [g2-load]
+changed: [g2-zk3]
+changed: [g2-zk1]
+changed: [g2-zk2]
+
+TASK [guest : Enable ZooKeeper firewall] ***************************************
+skipping: [g2-router]
+skipping: [g2-ch1r1]
+skipping: [g2-ch1r2]
+skipping: [g2-ch2r1]
+skipping: [g2-ch2r2]
+skipping: [g2-ch3r1]
+skipping: [g2-ch3r2]
+skipping: [g2-load]
+changed: [g2-zk2]
+changed: [g2-zk3]
+changed: [g2-zk1]
+
+TASK [guest : Set break-glass console password with SSH password login disabled] ***
+changed: [g2-ch1r1]
+changed: [g2-ch2r2]
+changed: [g2-router]
+changed: [g2-ch1r2]
+changed: [g2-ch2r1]
+changed: [g2-ch3r1]
+changed: [g2-ch3r2]
+changed: [g2-zk1]
+changed: [g2-zk2]
+changed: [g2-zk3]
+changed: [g2-load]
+
+TASK [guest : Install timed chaos runner on nodes] *****************************
+ok: [g2-router]
+changed: [g2-ch2r2]
+changed: [g2-ch1r2]
+changed: [g2-ch1r1]
+changed: [g2-ch2r1]
+changed: [g2-ch3r1]
+changed: [g2-ch3r2]
+changed: [g2-zk1]
+changed: [g2-zk2]
+changed: [g2-zk3]
+changed: [g2-load]
+
+TASK [guest : Install chaos topology on nodes] *********************************
+ok: [g2-router]
+changed: [g2-ch1r1]
+changed: [g2-ch2r1]
+changed: [g2-ch1r2]
+changed: [g2-ch2r2]
+changed: [g2-ch3r1]
+changed: [g2-ch3r2]
+changed: [g2-zk1]
+changed: [g2-zk2]
+changed: [g2-zk3]
+changed: [g2-load]
+
+TASK [guest : Recover unfinished experiments after reboot] *********************
+changed: [g2-ch1r2]
+changed: [g2-router]
+changed: [g2-ch2r2]
+changed: [g2-ch1r1]
+changed: [g2-ch2r1]
+changed: [g2-ch3r2]
+changed: [g2-ch3r1]
+changed: [g2-zk1]
+changed: [g2-zk3]
+changed: [g2-zk2]
+changed: [g2-load]
+
+TASK [guest : Enable boot recovery] ********************************************
+changed: [g2-router]
+changed: [g2-ch1r2]
+changed: [g2-ch2r2]
+changed: [g2-ch2r1]
+changed: [g2-ch1r1]
+changed: [g2-ch3r1]
+changed: [g2-zk1]
+changed: [g2-ch3r2]
+changed: [g2-zk3]
+changed: [g2-zk2]
+changed: [g2-load]
+
+RUNNING HANDLER [guest : Reload guest firewall] ********************************
+changed: [g2-zk2]
+changed: [g2-zk1]
+changed: [g2-zk3]
+
+PLAY RECAP *********************************************************************
+g2-ch1r1                   : ok=11   changed=8    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+g2-ch1r2                   : ok=11   changed=8    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+g2-ch2r1                   : ok=11   changed=8    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+g2-ch2r2                   : ok=11   changed=8    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+g2-ch3r1                   : ok=11   changed=8    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+g2-ch3r2                   : ok=11   changed=8    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+g2-load                    : ok=11   changed=8    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+g2-router                  : ok=22   changed=14   unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+g2-zk1                     : ok=14   changed=11   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-zk2                     : ok=14   changed=11   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-zk3                     : ok=14   changed=11   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+lab                        : ok=171  changed=36   unreachable=0    failed=0    skipped=20   rescued=0    ignored=0   
+

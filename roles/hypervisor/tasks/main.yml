@@ -1,0 +1,140 @@
+---
+- name: Prepare private break-glass console credential on controller
+  ansible.builtin.command:
+    argv: [python3, "{{ playbook_dir }}/scripts/console-secret.py"]
+    creates: "{{ playbook_dir }}/.local/console.sha512"
+  delegate_to: localhost
+  become: false
+  no_log: true
+- name: Check KVM device
+  ansible.builtin.stat:
+    path: /dev/kvm
+  register: hypervisor_kvm_device
+- name: Check host requirements
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.os_family == 'Debian'
+      - ansible_facts.architecture == 'x86_64'
+      - hypervisor_kvm_device.stat.exists
+      - ansible_facts.memtotal_mb > (lab_vms | map(attribute='memory') | sum) + 2048
+      - lab_vms | map(attribute='ip') | unique | length == lab_vms | length
+      - lab_vms | map(attribute='name') | unique | length == lab_vms | length
+    fail_msg: Requires Debian/Ubuntu amd64, KVM, unique IPs/names and 2 GiB host memory reserve.
+- name: Install virtualization packages
+  ansible.builtin.apt:
+    name: [qemu-kvm, qemu-utils, libvirt-daemon-system, libvirt-clients, cloud-image-utils, python3-lxml]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+- name: Enable libvirt
+  ansible.builtin.systemd_service:
+    name: libvirtd
+    enabled: true
+    state: started
+- name: Create managed storage
+  ansible.builtin.file:
+    path: "{{ lab_dir }}"
+    state: directory
+    mode: '0755'
+- name: Download pinned Debian 13 image
+  ansible.builtin.get_url:
+    url: "{{ lab_image_url }}"
+    dest: "{{ lab_dir }}/debian-13.qcow2"
+    checksum: "{{ lab_image_checksum }}"
+    mode: '0644'
+- name: Read defined networks
+  ansible.builtin.command: virsh net-list --all --name
+  register: hypervisor_defined_networks
+  changed_when: false
+- name: Render network definitions
+  ansible.builtin.template:
+    src: network.xml.j2
+    dest: "{{ lab_dir }}/network-{{ item.name }}.xml"
+    mode: '0644'
+  loop: "{{ lab_networks }}"
+  check_mode: true
+  register: hypervisor_network_xml
+- name: Refuse silently changing existing networks
+  ansible.builtin.assert:
+    that: not item.changed or (lab_prefix + item.item.name) not in hypervisor_defined_networks.stdout_lines
+    fail_msg: Existing network definition changed. Restore previous config or explicitly rebuild the lab.
+  loop: "{{ hypervisor_network_xml.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+- name: Save validated network definitions
+  ansible.builtin.template:
+    src: network.xml.j2
+    dest: "{{ lab_dir }}/network-{{ item.name }}.xml"
+    mode: '0644'
+  loop: "{{ lab_networks }}"
+- name: Define new networks
+  ansible.builtin.command: "virsh net-define {{ lab_dir }}/network-{{ item.name }}.xml"
+  loop: "{{ lab_networks }}"
+  when: (lab_prefix + item.name) not in hypervisor_defined_networks.stdout_lines
+  changed_when: true
+- name: Read running networks
+  ansible.builtin.command: virsh net-list --name
+  register: hypervisor_running_networks
+  changed_when: false
+- name: Start networks
+  ansible.builtin.command: "virsh net-start {{ lab_prefix }}{{ item.name }}"
+  loop: "{{ lab_networks }}"
+  when: (lab_prefix + item.name) not in hypervisor_running_networks.stdout_lines
+  changed_when: true
+- name: Read autostart networks
+  ansible.builtin.command: virsh net-list --autostart --name
+  register: hypervisor_autostart_networks
+  changed_when: false
+- name: Enable network autostart
+  ansible.builtin.command: "virsh net-autostart {{ lab_prefix }}{{ item.name }}"
+  loop: "{{ lab_networks }}"
+  when: (lab_prefix + item.name) not in hypervisor_autostart_networks.stdout_lines
+  changed_when: true
+- name: Install persistent host routes through WAN VM
+  ansible.builtin.template:
+    src: routes.service.j2
+    dest: /etc/systemd/system/itmo-g2-routes.service
+    mode: '0644'
+  register: hypervisor_routes_unit
+- name: Activate host routes
+  ansible.builtin.systemd_service:
+    name: itmo-g2-routes
+    enabled: true
+    state: "{{ 'restarted' if hypervisor_routes_unit.changed else 'started' }}"
+    daemon_reload: "{{ hypervisor_routes_unit.changed }}"
+- name: Export service team inventory on controller
+  ansible.builtin.template:
+    src: guests.yml.j2
+    dest: "{{ playbook_dir }}/inventory/guests.generated.yml"
+    mode: '0644'
+  delegate_to: localhost
+  become: false
+- name: Install timed chaos runner
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/scripts/chaos.py"
+    dest: /usr/local/sbin/g2-chaos
+    mode: '0755'
+- name: Install chaos topology
+  ansible.builtin.copy:
+    dest: /etc/itmo-g2-topology.json
+    content: "{{ {'networks': lab_networks, 'vms': lab_vms} | to_nice_json }}"
+    mode: '0644'
+- name: Recover unfinished experiments after reboot
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/itmo-g2-chaos-recovery.service
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Recover ITMO group 2 experiments after reboot
+      After=network-online.target libvirtd.service nftables.service
+      Wants=network-online.target
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/sbin/g2-chaos rollback
+      [Install]
+      WantedBy=multi-user.target
+- name: Enable boot recovery
+  ansible.builtin.systemd_service:
+    name: itmo-g2-chaos-recovery
+    enabled: true
+    daemon_reload: true

@@ -1,0 +1,15 @@
+test_excessive_duration_rejected_before_network_changes (test_chaos.RollbackTests.test_excessive_duration_rejected_before_network_changes) ... ok
+test_failed_undo_keeps_state_for_systemd_retry (test_chaos.RollbackTests.test_failed_undo_keeps_state_for_systemd_retry) ... ok
+test_no_active_state_makes_rollback_idempotent (test_chaos.RollbackTests.test_no_active_state_makes_rollback_idempotent) ... ok
+test_old_timer_does_not_undo_a_new_experiment (test_chaos.RollbackTests.test_old_timer_does_not_undo_a_new_experiment) ... ok
+test_timer_failure_prevents_fault_injection (test_chaos.RollbackTests.test_timer_failure_prevents_fault_injection) ... ok
+test_two_dc_all_pairs_preserve_third_dc_router_and_stopped_nodes (test_chaos.RollbackTests.test_two_dc_all_pairs_preserve_third_dc_router_and_stopped_nodes) ... ok
+test_two_dc_partial_failure_restores_original_state (test_chaos.RollbackTests.test_two_dc_partial_failure_restores_original_state) ... ok
+test_two_dc_rejects_duplicate_dc_before_changes (test_chaos.RollbackTests.test_two_dc_rejects_duplicate_dc_before_changes) ... ok
+test_two_dc_timer_failure_prevents_shutdowns (test_chaos.RollbackTests.test_two_dc_timer_failure_prevents_shutdowns) ... ok
+test_undo_reverses_changes_and_removes_state_only_after_success (test_chaos.RollbackTests.test_undo_reverses_changes_and_removes_state_only_after_success) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.008s
+
+OK

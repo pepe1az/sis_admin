@@ -1,0 +1,5 @@
+---
+- name: Destroy old lab with explicit confirmation
+  ansible.builtin.import_playbook: destroy.yml
+- name: Provision a fresh lab
+  ansible.builtin.import_playbook: site.yml

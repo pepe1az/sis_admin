@@ -1,0 +1,43 @@
+---
+- name: Start bounded host experiment
+  ansible.builtin.command: "g2-chaos {{ scenario }} --dc dc2 --seconds 10"
+  changed_when: true
+- name: Inspect failed switch
+  ansible.builtin.command: ip -j link show virbr-g2dc2
+  register: failed_bridge
+  changed_when: false
+  when: scenario == 'switch'
+- name: Verify bridge is down during failure
+  ansible.builtin.assert:
+    that: "'UP' not in (failed_bridge.stdout | from_json | first).flags"
+  when: scenario == 'switch'
+- name: Inspect powered off VMs
+  ansible.builtin.command: virsh list --name
+  register: remaining_vms
+  changed_when: false
+  when: scenario == 'dc'
+- name: Verify DC nodes are powered off
+  ansible.builtin.assert:
+    that: item.name not in remaining_vms.stdout_lines
+  loop: "{{ lab_vms | selectattr('dc', 'equalto', 'dc2') | list }}"
+  when: scenario == 'dc'
+- name: Wait for timer to restore host resources
+  ansible.builtin.wait_for:
+    path: /var/lib/itmo-g2-chaos/active.json
+    state: absent
+    timeout: 60
+- name: Read restored bridge
+  ansible.builtin.command: ip -j link show virbr-g2dc2
+  register: restored_bridge
+  changed_when: false
+- name: Verify bridge is up
+  ansible.builtin.assert:
+    that: "'UP' in (restored_bridge.stdout | from_json | first).flags"
+- name: Read restored VM list
+  ansible.builtin.command: virsh list --name
+  register: restored_vms
+  changed_when: false
+- name: Verify DC nodes are running
+  ansible.builtin.assert:
+    that: item.name in restored_vms.stdout_lines
+  loop: "{{ lab_vms | selectattr('dc', 'equalto', 'dc2') | list }}"

@@ -1,0 +1,510 @@
+
+PLAY [Register guests for bounded network experiments] *************************
+
+TASK [Load guest inventory] ****************************************************
+included: /home/kirill/ucheba/sis_admin/playbooks/inventory.yml for lab
+
+TASK [Register guest connections through hypervisor] ***************************
+ok: [lab] => (item=g2-router)
+ok: [lab] => (item=g2-ch1r1)
+ok: [lab] => (item=g2-ch1r2)
+ok: [lab] => (item=g2-ch2r1)
+ok: [lab] => (item=g2-ch2r2)
+ok: [lab] => (item=g2-ch3r1)
+ok: [lab] => (item=g2-ch3r2)
+ok: [lab] => (item=g2-zk1)
+ok: [lab] => (item=g2-zk2)
+ok: [lab] => (item=g2-zk3)
+ok: [lab] => (item=g2-load)
+
+PLAY [Validate automatic rollback on router] ***********************************
+
+TASK [Test one router scenario at a time] **************************************
+included: /home/kirill/ucheba/sis_admin/playbooks/smoke-router.yml for g2-router => (item=wan)
+included: /home/kirill/ucheba/sis_admin/playbooks/smoke-router.yml for g2-router => (item=asymmetric)
+included: /home/kirill/ucheba/sis_admin/playbooks/smoke-router.yml for g2-router => (item=mtu)
+
+TASK [Start bounded router experiment] *****************************************
+changed: [g2-router]
+
+TASK [Inspect current qdiscs] **************************************************
+ok: [g2-router]
+
+TASK [Verify netem was installed] **********************************************
+ok: [g2-router] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Inspect active fault rules] **********************************************
+skipping: [g2-router]
+
+TASK [Measure cross-DC delay while netem is active] ****************************
+ok: [g2-router -> g2-ch1r2(10.22.2.11)]
+
+TASK [Verify WAN delay affects actual traffic] *********************************
+ok: [g2-router] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Check asymmetry blocks cross-DC ping] ************************************
+skipping: [g2-router]
+
+TASK [Check oversized DF packets hit the MTU black hole] ***********************
+skipping: [g2-router]
+
+TASK [Wait for timer to clear active state] ************************************
+ok: [g2-router]
+
+TASK [Read qdiscs after rollback] **********************************************
+ok: [g2-router]
+
+TASK [Verify netem was removed] ************************************************
+ok: [g2-router] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Read interface after rollback] *******************************************
+ok: [g2-router]
+
+TASK [Verify restored MTU] *****************************************************
+ok: [g2-router] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Verify fault table was removed] ******************************************
+ok: [g2-router]
+
+TASK [Start bounded router experiment] *****************************************
+changed: [g2-router]
+
+TASK [Inspect current qdiscs] **************************************************
+ok: [g2-router]
+
+TASK [Verify netem was installed] **********************************************
+skipping: [g2-router]
+
+TASK [Inspect active fault rules] **********************************************
+ok: [g2-router]
+
+TASK [Measure cross-DC delay while netem is active] ****************************
+skipping: [g2-router]
+
+TASK [Verify WAN delay affects actual traffic] *********************************
+skipping: [g2-router]
+
+TASK [Check asymmetry blocks cross-DC ping] ************************************
+ok: [g2-router -> g2-ch1r1(10.22.1.11)]
+
+TASK [Check oversized DF packets hit the MTU black hole] ***********************
+skipping: [g2-router]
+
+TASK [Wait for timer to clear active state] ************************************
+ok: [g2-router]
+
+TASK [Read qdiscs after rollback] **********************************************
+ok: [g2-router]
+
+TASK [Verify netem was removed] ************************************************
+ok: [g2-router] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Read interface after rollback] *******************************************
+ok: [g2-router]
+
+TASK [Verify restored MTU] *****************************************************
+ok: [g2-router] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Verify fault table was removed] ******************************************
+ok: [g2-router]
+
+TASK [Start bounded router experiment] *****************************************
+changed: [g2-router]
+
+TASK [Inspect current qdiscs] **************************************************
+ok: [g2-router]
+
+TASK [Verify netem was installed] **********************************************
+skipping: [g2-router]
+
+TASK [Inspect active fault rules] **********************************************
+ok: [g2-router]
+
+TASK [Measure cross-DC delay while netem is active] ****************************
+skipping: [g2-router]
+
+TASK [Verify WAN delay affects actual traffic] *********************************
+skipping: [g2-router]
+
+TASK [Check asymmetry blocks cross-DC ping] ************************************
+skipping: [g2-router]
+
+TASK [Check oversized DF packets hit the MTU black hole] ***********************
+ok: [g2-router -> g2-ch1r2(10.22.2.11)]
+
+TASK [Wait for timer to clear active state] ************************************
+ok: [g2-router]
+
+TASK [Read qdiscs after rollback] **********************************************
+ok: [g2-router]
+
+TASK [Verify netem was removed] ************************************************
+ok: [g2-router] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Read interface after rollback] *******************************************
+ok: [g2-router]
+
+TASK [Verify restored MTU] *****************************************************
+ok: [g2-router] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Verify fault table was removed] ******************************************
+ok: [g2-router]
+
+PLAY [Validate local ZooKeeper isolation rollback] *****************************
+
+TASK [Start timed ZooKeeper isolation] *****************************************
+changed: [g2-ch1r1]
+
+TASK [Inspect active isolation rules] ******************************************
+ok: [g2-ch1r1]
+
+TASK [Wait for automatic cleanup] **********************************************
+ok: [g2-ch1r1]
+
+TASK [Verify isolation table is removed] ***************************************
+ok: [g2-ch1r1]
+
+PLAY [Validate bridge and DC rollback on hypervisor] ***************************
+
+TASK [Test one host scenario at a time] ****************************************
+included: /home/kirill/ucheba/sis_admin/playbooks/smoke-host.yml for lab => (item=switch)
+included: /home/kirill/ucheba/sis_admin/playbooks/smoke-host.yml for lab => (item=dc)
+
+TASK [Start bounded host experiment] *******************************************
+changed: [lab]
+
+TASK [Inspect failed switch] ***************************************************
+ok: [lab]
+
+TASK [Verify bridge is down during failure] ************************************
+ok: [lab] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Inspect powered off VMs] *************************************************
+skipping: [lab]
+
+TASK [Verify DC nodes are powered off] *****************************************
+skipping: [lab] => (item={'name': 'g2-ch1r2', 'role': 'clickhouse', 'dc': 'dc2', 'ip': '10.22.2.11', 'memory': 1024, 'vcpus': 1, 'nics': [{'network': 'dc2', 'name': 'dc2', 'ip': '10.22.2.11', 'mac': '52:54:00:22:00:12'}], 'data_disks': 4, 'shard': 1, 'replica': 2, 'raid_level': 10}) 
+skipping: [lab] => (item={'name': 'g2-ch2r1', 'role': 'clickhouse', 'dc': 'dc2', 'ip': '10.22.2.12', 'memory': 1024, 'vcpus': 1, 'nics': [{'network': 'dc2', 'name': 'dc2', 'ip': '10.22.2.12', 'mac': '52:54:00:22:00:13'}], 'data_disks': 4, 'shard': 2, 'replica': 1, 'raid_level': 5}) 
+skipping: [lab] => (item={'name': 'g2-zk2', 'role': 'zookeeper', 'dc': 'dc2', 'ip': '10.22.2.21', 'memory': 512, 'vcpus': 1, 'nics': [{'network': 'dc2', 'name': 'dc2', 'ip': '10.22.2.21', 'mac': '52:54:00:22:00:18'}], 'data_disks': 0}) 
+skipping: [lab]
+
+TASK [Wait for timer to restore host resources] ********************************
+ok: [lab]
+
+TASK [Read restored bridge] ****************************************************
+ok: [lab]
+
+TASK [Verify bridge is up] *****************************************************
+ok: [lab] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Read restored VM list] ***************************************************
+ok: [lab]
+
+TASK [Verify DC nodes are running] *********************************************
+ok: [lab] => (item={'name': 'g2-ch1r2', 'role': 'clickhouse', 'dc': 'dc2', 'ip': '10.22.2.11', 'memory': 1024, 'vcpus': 1, 'nics': [{'network': 'dc2', 'name': 'dc2', 'ip': '10.22.2.11', 'mac': '52:54:00:22:00:12'}], 'data_disks': 4, 'shard': 1, 'replica': 2, 'raid_level': 10}) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 4,
+        "dc": "dc2",
+        "ip": "10.22.2.11",
+        "memory": 1024,
+        "name": "g2-ch1r2",
+        "nics": [
+            {
+                "ip": "10.22.2.11",
+                "mac": "52:54:00:22:00:12",
+                "name": "dc2",
+                "network": "dc2"
+            }
+        ],
+        "raid_level": 10,
+        "replica": 2,
+        "role": "clickhouse",
+        "shard": 1,
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item={'name': 'g2-ch2r1', 'role': 'clickhouse', 'dc': 'dc2', 'ip': '10.22.2.12', 'memory': 1024, 'vcpus': 1, 'nics': [{'network': 'dc2', 'name': 'dc2', 'ip': '10.22.2.12', 'mac': '52:54:00:22:00:13'}], 'data_disks': 4, 'shard': 2, 'replica': 1, 'raid_level': 5}) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 4,
+        "dc": "dc2",
+        "ip": "10.22.2.12",
+        "memory": 1024,
+        "name": "g2-ch2r1",
+        "nics": [
+            {
+                "ip": "10.22.2.12",
+                "mac": "52:54:00:22:00:13",
+                "name": "dc2",
+                "network": "dc2"
+            }
+        ],
+        "raid_level": 5,
+        "replica": 1,
+        "role": "clickhouse",
+        "shard": 2,
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item={'name': 'g2-zk2', 'role': 'zookeeper', 'dc': 'dc2', 'ip': '10.22.2.21', 'memory': 512, 'vcpus': 1, 'nics': [{'network': 'dc2', 'name': 'dc2', 'ip': '10.22.2.21', 'mac': '52:54:00:22:00:18'}], 'data_disks': 0}) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 0,
+        "dc": "dc2",
+        "ip": "10.22.2.21",
+        "memory": 512,
+        "name": "g2-zk2",
+        "nics": [
+            {
+                "ip": "10.22.2.21",
+                "mac": "52:54:00:22:00:18",
+                "name": "dc2",
+                "network": "dc2"
+            }
+        ],
+        "role": "zookeeper",
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+
+TASK [Start bounded host experiment] *******************************************
+changed: [lab]
+
+TASK [Inspect failed switch] ***************************************************
+skipping: [lab]
+
+TASK [Verify bridge is down during failure] ************************************
+skipping: [lab]
+
+TASK [Inspect powered off VMs] *************************************************
+ok: [lab]
+
+TASK [Verify DC nodes are powered off] *****************************************
+ok: [lab] => (item={'name': 'g2-ch1r2', 'role': 'clickhouse', 'dc': 'dc2', 'ip': '10.22.2.11', 'memory': 1024, 'vcpus': 1, 'nics': [{'network': 'dc2', 'name': 'dc2', 'ip': '10.22.2.11', 'mac': '52:54:00:22:00:12'}], 'data_disks': 4, 'shard': 1, 'replica': 2, 'raid_level': 10}) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 4,
+        "dc": "dc2",
+        "ip": "10.22.2.11",
+        "memory": 1024,
+        "name": "g2-ch1r2",
+        "nics": [
+            {
+                "ip": "10.22.2.11",
+                "mac": "52:54:00:22:00:12",
+                "name": "dc2",
+                "network": "dc2"
+            }
+        ],
+        "raid_level": 10,
+        "replica": 2,
+        "role": "clickhouse",
+        "shard": 1,
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item={'name': 'g2-ch2r1', 'role': 'clickhouse', 'dc': 'dc2', 'ip': '10.22.2.12', 'memory': 1024, 'vcpus': 1, 'nics': [{'network': 'dc2', 'name': 'dc2', 'ip': '10.22.2.12', 'mac': '52:54:00:22:00:13'}], 'data_disks': 4, 'shard': 2, 'replica': 1, 'raid_level': 5}) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 4,
+        "dc": "dc2",
+        "ip": "10.22.2.12",
+        "memory": 1024,
+        "name": "g2-ch2r1",
+        "nics": [
+            {
+                "ip": "10.22.2.12",
+                "mac": "52:54:00:22:00:13",
+                "name": "dc2",
+                "network": "dc2"
+            }
+        ],
+        "raid_level": 5,
+        "replica": 1,
+        "role": "clickhouse",
+        "shard": 2,
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item={'name': 'g2-zk2', 'role': 'zookeeper', 'dc': 'dc2', 'ip': '10.22.2.21', 'memory': 512, 'vcpus': 1, 'nics': [{'network': 'dc2', 'name': 'dc2', 'ip': '10.22.2.21', 'mac': '52:54:00:22:00:18'}], 'data_disks': 0}) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 0,
+        "dc": "dc2",
+        "ip": "10.22.2.21",
+        "memory": 512,
+        "name": "g2-zk2",
+        "nics": [
+            {
+                "ip": "10.22.2.21",
+                "mac": "52:54:00:22:00:18",
+                "name": "dc2",
+                "network": "dc2"
+            }
+        ],
+        "role": "zookeeper",
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+
+TASK [Wait for timer to restore host resources] ********************************
+ok: [lab]
+
+TASK [Read restored bridge] ****************************************************
+ok: [lab]
+
+TASK [Verify bridge is up] *****************************************************
+ok: [lab] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Read restored VM list] ***************************************************
+ok: [lab]
+
+TASK [Verify DC nodes are running] *********************************************
+ok: [lab] => (item={'name': 'g2-ch1r2', 'role': 'clickhouse', 'dc': 'dc2', 'ip': '10.22.2.11', 'memory': 1024, 'vcpus': 1, 'nics': [{'network': 'dc2', 'name': 'dc2', 'ip': '10.22.2.11', 'mac': '52:54:00:22:00:12'}], 'data_disks': 4, 'shard': 1, 'replica': 2, 'raid_level': 10}) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 4,
+        "dc": "dc2",
+        "ip": "10.22.2.11",
+        "memory": 1024,
+        "name": "g2-ch1r2",
+        "nics": [
+            {
+                "ip": "10.22.2.11",
+                "mac": "52:54:00:22:00:12",
+                "name": "dc2",
+                "network": "dc2"
+            }
+        ],
+        "raid_level": 10,
+        "replica": 2,
+        "role": "clickhouse",
+        "shard": 1,
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item={'name': 'g2-ch2r1', 'role': 'clickhouse', 'dc': 'dc2', 'ip': '10.22.2.12', 'memory': 1024, 'vcpus': 1, 'nics': [{'network': 'dc2', 'name': 'dc2', 'ip': '10.22.2.12', 'mac': '52:54:00:22:00:13'}], 'data_disks': 4, 'shard': 2, 'replica': 1, 'raid_level': 5}) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 4,
+        "dc": "dc2",
+        "ip": "10.22.2.12",
+        "memory": 1024,
+        "name": "g2-ch2r1",
+        "nics": [
+            {
+                "ip": "10.22.2.12",
+                "mac": "52:54:00:22:00:13",
+                "name": "dc2",
+                "network": "dc2"
+            }
+        ],
+        "raid_level": 5,
+        "replica": 1,
+        "role": "clickhouse",
+        "shard": 2,
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item={'name': 'g2-zk2', 'role': 'zookeeper', 'dc': 'dc2', 'ip': '10.22.2.21', 'memory': 512, 'vcpus': 1, 'nics': [{'network': 'dc2', 'name': 'dc2', 'ip': '10.22.2.21', 'mac': '52:54:00:22:00:18'}], 'data_disks': 0}) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "data_disks": 0,
+        "dc": "dc2",
+        "ip": "10.22.2.21",
+        "memory": 512,
+        "name": "g2-zk2",
+        "nics": [
+            {
+                "ip": "10.22.2.21",
+                "mac": "52:54:00:22:00:18",
+                "name": "dc2",
+                "network": "dc2"
+            }
+        ],
+        "role": "zookeeper",
+        "vcpus": 1
+    },
+    "msg": "All assertions passed"
+}
+
+PLAY [Recheck all restored guests] *********************************************
+
+TASK [Wait for SSH after automatic recovery] ***********************************
+ok: [g2-router]
+ok: [g2-ch1r1]
+ok: [g2-ch2r2]
+ok: [g2-ch3r2]
+ok: [g2-ch3r1]
+ok: [g2-zk1]
+ok: [g2-zk3]
+ok: [g2-load]
+ok: [g2-zk2]
+ok: [g2-ch2r1]
+ok: [g2-ch1r2]
+
+PLAY RECAP *********************************************************************
+g2-ch1r1                   : ok=5    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-ch1r2                   : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-ch2r1                   : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-ch2r2                   : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-ch3r1                   : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-ch3r2                   : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-load                    : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-router                  : ok=35   changed=3    unreachable=0    failed=0    skipped=11   rescued=0    ignored=0   
+g2-zk1                     : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-zk2                     : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-zk3                     : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+lab                        : ok=20   changed=2    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
+

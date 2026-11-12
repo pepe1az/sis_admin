@@ -1,0 +1,204 @@
+lab | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.12"
+    },
+    "changed": true,
+    "checksum": "b35867d93caaca1cd6375e904f31d3d2ce2bc23f",
+    "dest": "/usr/local/sbin/g2-chaos",
+    "gid": 0,
+    "group": "root",
+    "md5sum": "0b2d294914a40d51509b4c99a62e480a",
+    "mode": "0755",
+    "owner": "root",
+    "size": 8742,
+    "src": "/root/.ansible/tmp/ansible-tmp-1794218416.3698156-124879-280419321479401/.source",
+    "state": "file",
+    "uid": 0
+}
+g2-router | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "b35867d93caaca1cd6375e904f31d3d2ce2bc23f",
+    "dest": "/usr/local/sbin/g2-chaos",
+    "gid": 0,
+    "group": "root",
+    "md5sum": "0b2d294914a40d51509b4c99a62e480a",
+    "mode": "0755",
+    "owner": "root",
+    "size": 8742,
+    "src": "/home/ansible/.ansible/tmp/ansible-tmp-1794218418.843397-124958-54714193073553/.source",
+    "state": "file",
+    "uid": 0
+}
+g2-ch1r2 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "b35867d93caaca1cd6375e904f31d3d2ce2bc23f",
+    "dest": "/usr/local/sbin/g2-chaos",
+    "gid": 0,
+    "group": "root",
+    "md5sum": "0b2d294914a40d51509b4c99a62e480a",
+    "mode": "0755",
+    "owner": "root",
+    "size": 8742,
+    "src": "/home/ansible/.ansible/tmp/ansible-tmp-1794218419.764078-124960-254784036230424/.source",
+    "state": "file",
+    "uid": 0
+}
+g2-ch2r2 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "b35867d93caaca1cd6375e904f31d3d2ce2bc23f",
+    "dest": "/usr/local/sbin/g2-chaos",
+    "gid": 0,
+    "group": "root",
+    "md5sum": "0b2d294914a40d51509b4c99a62e480a",
+    "mode": "0755",
+    "owner": "root",
+    "size": 8742,
+    "src": "/home/ansible/.ansible/tmp/ansible-tmp-1794218420.0274992-124962-126431179455437/.source",
+    "state": "file",
+    "uid": 0
+}
+g2-ch2r1 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "b35867d93caaca1cd6375e904f31d3d2ce2bc23f",
+    "dest": "/usr/local/sbin/g2-chaos",
+    "gid": 0,
+    "group": "root",
+    "md5sum": "0b2d294914a40d51509b4c99a62e480a",
+    "mode": "0755",
+    "owner": "root",
+    "size": 8742,
+    "src": "/home/ansible/.ansible/tmp/ansible-tmp-1794218420.0877824-124961-154813093820015/.source",
+    "state": "file",
+    "uid": 0
+}
+g2-ch1r1 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "b35867d93caaca1cd6375e904f31d3d2ce2bc23f",
+    "dest": "/usr/local/sbin/g2-chaos",
+    "gid": 0,
+    "group": "root",
+    "md5sum": "0b2d294914a40d51509b4c99a62e480a",
+    "mode": "0755",
+    "owner": "root",
+    "size": 8742,
+    "src": "/home/ansible/.ansible/tmp/ansible-tmp-1794218420.0680254-124959-116163525175362/.source",
+    "state": "file",
+    "uid": 0
+}
+g2-ch3r1 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "b35867d93caaca1cd6375e904f31d3d2ce2bc23f",
+    "dest": "/usr/local/sbin/g2-chaos",
+    "gid": 0,
+    "group": "root",
+    "md5sum": "0b2d294914a40d51509b4c99a62e480a",
+    "mode": "0755",
+    "owner": "root",
+    "size": 8742,
+    "src": "/home/ansible/.ansible/tmp/ansible-tmp-1794218422.6073134-125046-257398635998307/.source",
+    "state": "file",
+    "uid": 0
+}
+g2-ch3r2 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "b35867d93caaca1cd6375e904f31d3d2ce2bc23f",
+    "dest": "/usr/local/sbin/g2-chaos",
+    "gid": 0,
+    "group": "root",
+    "md5sum": "0b2d294914a40d51509b4c99a62e480a",
+    "mode": "0755",
+    "owner": "root",
+    "size": 8742,
+    "src": "/home/ansible/.ansible/tmp/ansible-tmp-1794218423.2561197-125086-212705543132533/.source",
+    "state": "file",
+    "uid": 0
+}
+g2-zk3 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "b35867d93caaca1cd6375e904f31d3d2ce2bc23f",
+    "dest": "/usr/local/sbin/g2-chaos",
+    "gid": 0,
+    "group": "root",
+    "md5sum": "0b2d294914a40d51509b4c99a62e480a",
+    "mode": "0755",
+    "owner": "root",
+    "size": 8742,
+    "src": "/home/ansible/.ansible/tmp/ansible-tmp-1794218423.6557832-125099-164956255889878/.source",
+    "state": "file",
+    "uid": 0
+}
+g2-zk1 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "b35867d93caaca1cd6375e904f31d3d2ce2bc23f",
+    "dest": "/usr/local/sbin/g2-chaos",
+    "gid": 0,
+    "group": "root",
+    "md5sum": "0b2d294914a40d51509b4c99a62e480a",
+    "mode": "0755",
+    "owner": "root",
+    "size": 8742,
+    "src": "/home/ansible/.ansible/tmp/ansible-tmp-1794218423.5158367-125095-199244065733808/.source",
+    "state": "file",
+    "uid": 0
+}
+g2-zk2 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "b35867d93caaca1cd6375e904f31d3d2ce2bc23f",
+    "dest": "/usr/local/sbin/g2-chaos",
+    "gid": 0,
+    "group": "root",
+    "md5sum": "0b2d294914a40d51509b4c99a62e480a",
+    "mode": "0755",
+    "owner": "root",
+    "size": 8742,
+    "src": "/home/ansible/.ansible/tmp/ansible-tmp-1794218423.775868-125098-223080340217112/.source",
+    "state": "file",
+    "uid": 0
+}
+g2-load | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "b35867d93caaca1cd6375e904f31d3d2ce2bc23f",
+    "dest": "/usr/local/sbin/g2-chaos",
+    "gid": 0,
+    "group": "root",
+    "md5sum": "0b2d294914a40d51509b4c99a62e480a",
+    "mode": "0755",
+    "owner": "root",
+    "size": 8742,
+    "src": "/home/ansible/.ansible/tmp/ansible-tmp-1794218426.2884867-125177-278425765040304/.source",
+    "state": "file",
+    "uid": 0
+}

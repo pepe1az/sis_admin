@@ -1,0 +1,14 @@
+[Unit]
+Description=ITMO group 2 routes via router VM
+After=libvirtd.service network-online.target
+Requires=libvirtd.service
+Wants=network-online.target
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 60); do ip link show virbr-g2wan >/dev/null 2>&1 && exit 0; sleep 1; done; exit 1'
+{% for net in lab_networks if net.name != 'wan' %}
+ExecStart=/usr/sbin/ip route replace {{ net.cidr }} via 172.30.2.2 dev virbr-g2wan
+{% endfor %}
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,75 @@
+---
+- name: Verify required guest OS
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == 'Debian'
+      - ansible_facts.distribution_major_version == '13'
+- name: Install base network and management tools
+  ansible.builtin.apt:
+    name: [python3, sudo, qemu-guest-agent, curl, iputils-ping, traceroute, mtr-tiny, tcpdump, nftables, chrony]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+- name: Enable guest agent and time synchronization
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop: [qemu-guest-agent, chrony]
+- name: Provide temporary corporate name resolution
+  ansible.builtin.blockinfile:
+    path: /etc/hosts
+    marker: '# {mark} ITMO GROUP 2'
+    block: |
+      {% for node in lab_vms %}
+      {{ node.ip }} {{ node.name }}.{{ lab_domain }} {{ node.name }}
+      {% endfor %}
+- name: Restrict ZooKeeper ports to cluster and monitoring sources
+  ansible.builtin.template:
+    src: nftables.conf.j2
+    dest: /etc/nftables.conf
+    mode: '0644'
+    validate: /usr/sbin/nft -c -f %s
+  when: vm.role == 'zookeeper'
+  notify: Reload guest firewall
+- name: Enable ZooKeeper firewall
+  ansible.builtin.systemd_service:
+    name: nftables
+    state: started
+    enabled: true
+  when: vm.role == 'zookeeper'
+- name: Set break-glass console password with SSH password login disabled
+  ansible.builtin.user:
+    name: "{{ lab_user }}"
+    password: "{{ lookup('file', playbook_dir + '/.local/console.sha512') }}"
+    password_lock: false
+  no_log: true
+- name: Install timed chaos runner on nodes
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/scripts/chaos.py"
+    dest: /usr/local/sbin/g2-chaos
+    mode: '0755'
+- name: Install chaos topology on nodes
+  ansible.builtin.copy:
+    dest: /etc/itmo-g2-topology.json
+    content: "{{ {'networks': lab_networks, 'vms': lab_vms} | to_nice_json }}"
+    mode: '0644'
+- name: Recover unfinished experiments after reboot
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/itmo-g2-chaos-recovery.service
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Recover ITMO group 2 experiments after reboot
+      After=network-online.target libvirtd.service nftables.service
+      Wants=network-online.target
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/sbin/g2-chaos rollback
+      [Install]
+      WantedBy=multi-user.target
+- name: Enable boot recovery
+  ansible.builtin.systemd_service:
+    name: itmo-g2-chaos-recovery
+    enabled: true
+    daemon_reload: true

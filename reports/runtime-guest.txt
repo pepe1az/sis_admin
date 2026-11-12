@@ -1,0 +1,31 @@
+PRETTY_NAME="Debian GNU/Linux 13 (trixie)"
+NAME="Debian GNU/Linux"
+VERSION_ID="13"
+VERSION="13 (trixie)"
+VERSION_CODENAME=trixie
+DEBIAN_VERSION_FULL=13.7
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+dc1              UP             10.22.1.11/24 fe80::5054:ff:fe22:11/64 
+default via 10.22.1.1 dev dc1 proto static 
+10.22.1.0/24 dev dc1 proto kernel scope link src 10.22.1.11 
+NAME     SIZE TYPE SERIAL
+sr0      368K rom  QM00001
+vda        8G disk g2-ch1r1-root
+├─vda1   7.9G part 
+├─vda14    3M part 
+└─vda15  124M part 
+vdb        5G disk g2-ch1r1-data1
+vdc        5G disk g2-ch1r1-data2
+vdd        5G disk g2-ch1r1-data3
+vde        5G disk g2-ch1r1-data4
+traceroute to 10.22.2.21 (10.22.2.21), 4 hops max, 60 byte packets
+ 1  10.22.1.1  0.481 ms  0.487 ms  0.443 ms
+ 2  10.22.2.21  2.113 ms * *
+2026-11-09T10:03:01+0000 BEGIN g2-rollback-1794218581105270776 isolate-zk --node 10.22.1.11 --seconds 10
+2026-11-09T10:03:01+0000 APPLY nft -f /var/lib/itmo-g2-chaos/rules.nft
+2026-11-09T10:03:01+0000 ARMED automatic rollback in 10s; unit=g2-rollback-1794218581105270776.timer
+2026-11-09T10:03:11+0000 ROLLBACK OK g2-rollback-1794218581105270776

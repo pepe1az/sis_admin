@@ -1,0 +1,61 @@
+ Id   Name        State
+---------------------------
+ 14   g2-router   running
+ 15   g2-ch1r1    running
+ 18   g2-ch2r2    running
+ 19   g2-ch3r1    running
+ 20   g2-ch3r2    running
+ 21   g2-zk1      running
+ 23   g2-zk3      running
+ 24   g2-load     running
+ 25   g2-zk2      running
+ 26   g2-ch2r1    running
+ 27   g2-ch1r2    running
+
+ Name      State    Autostart   Persistent
+--------------------------------------------
+ default   active   yes         yes
+ g2-dc1    active   yes         yes
+ g2-dc2    active   yes         yes
+ g2-dc3    active   yes         yes
+ g2-wan    active   yes         yes
+
+default via 178.237.199.1 dev ens3 onlink 
+10.22.1.0/24 via 172.30.2.2 dev virbr-g2wan 
+10.22.2.0/24 via 172.30.2.2 dev virbr-g2wan 
+10.22.3.0/24 via 172.30.2.2 dev virbr-g2wan 
+172.30.2.0/24 dev virbr-g2wan proto kernel scope link src 172.30.2.1 
+178.237.199.0/25 dev ens3 proto kernel scope link src 178.237.199.16 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 linkdown 
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda2        99G   14G   81G  15% /
+               total        used        free      shared  buff/cache   available
+Mem:           15992        8020         935          19        7394        7971
+Swap:            511           0         511
+State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess
+LISTEN 0      4096   127.0.0.53%lo:53        0.0.0.0:*          
+LISTEN 0      511        127.0.0.1:8086      0.0.0.0:*          
+LISTEN 0      5          127.0.0.1:8084      0.0.0.0:*          
+LISTEN 0      511        127.0.0.1:8090      0.0.0.0:*          
+LISTEN 0      511          0.0.0.0:9443      0.0.0.0:*          
+LISTEN 0      4096      127.0.0.54:53        0.0.0.0:*          
+LISTEN 0      32     192.168.122.1:53        0.0.0.0:*          
+LISTEN 0      511          0.0.0.0:443       0.0.0.0:*          
+LISTEN 0      511          0.0.0.0:80        0.0.0.0:*          
+LISTEN 0      4096         0.0.0.0:22        0.0.0.0:*          
+LISTEN 0      511          0.0.0.0:8443      0.0.0.0:*          
+LISTEN 0      32        172.30.2.1:53        0.0.0.0:*          
+LISTEN 0      200          0.0.0.0:5432      0.0.0.0:*          
+LISTEN 0      511             [::]:80           [::]:*          
+LISTEN 0      4096            [::]:22           [::]:*          
+LISTEN 0      200             [::]:5432         [::]:*          
+2026-11-09T13:03:14+0300 BEGIN g2-rollback-1794218594803371381 switch --dc dc2 --seconds 10
+2026-11-09T13:03:14+0300 APPLY ip link set virbr-g2dc2 down
+2026-11-09T13:03:14+0300 ARMED automatic rollback in 10s; unit=g2-rollback-1794218594803371381.timer
+2026-11-09T13:03:25+0300 ROLLBACK OK g2-rollback-1794218594803371381
+2026-11-09T13:03:28+0300 BEGIN g2-rollback-1794218608642991479 dc --dc dc2 --seconds 10
+2026-11-09T13:03:28+0300 APPLY virsh destroy g2-ch1r2
+2026-11-09T13:03:29+0300 APPLY virsh destroy g2-ch2r1
+2026-11-09T13:03:29+0300 APPLY virsh destroy g2-zk2
+2026-11-09T13:03:29+0300 ARMED automatic rollback in 10s; unit=g2-rollback-1794218608642991479.timer
+2026-11-09T13:03:44+0300 ROLLBACK OK g2-rollback-1794218608642991479

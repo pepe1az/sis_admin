@@ -1,0 +1,669 @@
+
+PLAY [Discover lab guests and inspect host topology] ***************************
+
+TASK [Add lab inventory] *******************************************************
+included: /home/kirill/ucheba/sis_admin/playbooks/inventory.yml for lab
+
+TASK [Register guest connections through hypervisor] ***************************
+ok: [lab] => (item=g2-router)
+ok: [lab] => (item=g2-ch1r1)
+ok: [lab] => (item=g2-ch1r2)
+ok: [lab] => (item=g2-ch2r1)
+ok: [lab] => (item=g2-ch2r2)
+ok: [lab] => (item=g2-ch3r1)
+ok: [lab] => (item=g2-ch3r2)
+ok: [lab] => (item=g2-zk1)
+ok: [lab] => (item=g2-zk2)
+ok: [lab] => (item=g2-zk3)
+ok: [lab] => (item=g2-load)
+
+TASK [Inspect all lab bridges] *************************************************
+ok: [lab] => (item={'name': 'wan', 'bridge': 'virbr-g2wan', 'cidr': '172.30.2.0/24', 'gateway': '172.30.2.1'})
+ok: [lab] => (item={'name': 'dc1', 'bridge': 'virbr-g2dc1', 'cidr': '10.22.1.0/24', 'gateway': '10.22.1.1'})
+ok: [lab] => (item={'name': 'dc2', 'bridge': 'virbr-g2dc2', 'cidr': '10.22.2.0/24', 'gateway': '10.22.2.1'})
+ok: [lab] => (item={'name': 'dc3', 'bridge': 'virbr-g2dc3', 'cidr': '10.22.3.0/24', 'gateway': '10.22.3.1'})
+
+TASK [Ensure data bridges do not have host IPv4 addresses] *********************
+ok: [lab] => (item=dc1) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "cmd": [
+            "ip",
+            "-j",
+            "address",
+            "show",
+            "dev",
+            "virbr-g2dc1"
+        ],
+        "delta": "0:00:00.014572",
+        "end": "2026-11-09 12:58:01.348941",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": "ip -j address show dev virbr-g2dc1",
+                "_uses_shell": false,
+                "argv": null,
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "bridge": "virbr-g2dc1",
+            "cidr": "10.22.1.0/24",
+            "gateway": "10.22.1.1",
+            "name": "dc1"
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-09 12:58:01.334369",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "[{\"ifindex\":5,\"ifname\":\"virbr-g2dc1\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"52:54:00:05:77:6c\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"addr_info\":[]}]",
+        "stdout_lines": [
+            "[{\"ifindex\":5,\"ifname\":\"virbr-g2dc1\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"52:54:00:05:77:6c\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"addr_info\":[]}]"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=dc2) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "cmd": [
+            "ip",
+            "-j",
+            "address",
+            "show",
+            "dev",
+            "virbr-g2dc2"
+        ],
+        "delta": "0:00:00.009428",
+        "end": "2026-11-09 12:58:01.958944",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": "ip -j address show dev virbr-g2dc2",
+                "_uses_shell": false,
+                "argv": null,
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "bridge": "virbr-g2dc2",
+            "cidr": "10.22.2.0/24",
+            "gateway": "10.22.2.1",
+            "name": "dc2"
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-09 12:58:01.949516",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "[{\"ifindex\":6,\"ifname\":\"virbr-g2dc2\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"52:54:00:70:89:99\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"addr_info\":[]}]",
+        "stdout_lines": [
+            "[{\"ifindex\":6,\"ifname\":\"virbr-g2dc2\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"52:54:00:70:89:99\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"addr_info\":[]}]"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=dc3) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "cmd": [
+            "ip",
+            "-j",
+            "address",
+            "show",
+            "dev",
+            "virbr-g2dc3"
+        ],
+        "delta": "0:00:00.010909",
+        "end": "2026-11-09 12:58:02.647123",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": "ip -j address show dev virbr-g2dc3",
+                "_uses_shell": false,
+                "argv": null,
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "bridge": "virbr-g2dc3",
+            "cidr": "10.22.3.0/24",
+            "gateway": "10.22.3.1",
+            "name": "dc3"
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-09 12:58:02.636214",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "[{\"ifindex\":7,\"ifname\":\"virbr-g2dc3\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"52:54:00:57:fc:ed\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"addr_info\":[]}]",
+        "stdout_lines": [
+            "[{\"ifindex\":7,\"ifname\":\"virbr-g2dc3\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"52:54:00:57:fc:ed\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"addr_info\":[]}]"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+
+PLAY [Verify guest networking and storage] *************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [g2-ch2r2]
+ok: [g2-ch1r2]
+ok: [g2-ch1r1]
+ok: [g2-router]
+ok: [g2-ch2r1]
+ok: [g2-ch3r2]
+ok: [g2-ch3r1]
+ok: [g2-zk1]
+ok: [g2-zk3]
+ok: [g2-zk2]
+ok: [g2-load]
+
+TASK [Require Debian 13] *******************************************************
+ok: [g2-router] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch1r1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch1r2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch2r1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch2r2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch3r1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch3r2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-zk1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-zk2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-zk3] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-load] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Wait for clean cloud-init completion] ************************************
+ok: [g2-ch2r2]
+ok: [g2-ch1r1]
+ok: [g2-ch1r2]
+ok: [g2-ch2r1]
+ok: [g2-router]
+ok: [g2-ch3r1]
+ok: [g2-ch3r2]
+ok: [g2-zk1]
+ok: [g2-zk2]
+ok: [g2-zk3]
+ok: [g2-load]
+
+TASK [Check every guest is reachable from every guest] *************************
+ok: [g2-router] => (item=g2-router)
+ok: [g2-ch2r2] => (item=g2-router)
+ok: [g2-ch1r1] => (item=g2-router)
+ok: [g2-ch1r2] => (item=g2-router)
+ok: [g2-ch2r1] => (item=g2-router)
+ok: [g2-ch2r2] => (item=g2-ch1r1)
+ok: [g2-router] => (item=g2-ch1r1)
+ok: [g2-ch2r1] => (item=g2-ch1r1)
+ok: [g2-ch1r2] => (item=g2-ch1r1)
+ok: [g2-ch1r1] => (item=g2-ch1r1)
+ok: [g2-ch2r2] => (item=g2-ch1r2)
+ok: [g2-router] => (item=g2-ch1r2)
+ok: [g2-ch2r1] => (item=g2-ch1r2)
+ok: [g2-ch1r1] => (item=g2-ch1r2)
+ok: [g2-ch1r2] => (item=g2-ch1r2)
+ok: [g2-ch2r2] => (item=g2-ch2r1)
+ok: [g2-ch1r1] => (item=g2-ch2r1)
+ok: [g2-ch2r1] => (item=g2-ch2r1)
+ok: [g2-router] => (item=g2-ch2r1)
+ok: [g2-ch1r2] => (item=g2-ch2r1)
+ok: [g2-ch2r2] => (item=g2-ch2r2)
+ok: [g2-router] => (item=g2-ch2r2)
+ok: [g2-ch1r1] => (item=g2-ch2r2)
+ok: [g2-ch2r1] => (item=g2-ch2r2)
+ok: [g2-ch1r2] => (item=g2-ch2r2)
+ok: [g2-ch2r2] => (item=g2-ch3r1)
+ok: [g2-ch1r1] => (item=g2-ch3r1)
+ok: [g2-ch1r2] => (item=g2-ch3r1)
+ok: [g2-ch2r1] => (item=g2-ch3r1)
+ok: [g2-router] => (item=g2-ch3r1)
+ok: [g2-ch2r2] => (item=g2-ch3r2)
+ok: [g2-ch1r1] => (item=g2-ch3r2)
+ok: [g2-ch1r2] => (item=g2-ch3r2)
+ok: [g2-router] => (item=g2-ch3r2)
+ok: [g2-ch2r1] => (item=g2-ch3r2)
+ok: [g2-ch2r2] => (item=g2-zk1)
+ok: [g2-ch1r1] => (item=g2-zk1)
+ok: [g2-ch1r2] => (item=g2-zk1)
+ok: [g2-router] => (item=g2-zk1)
+ok: [g2-ch2r1] => (item=g2-zk1)
+ok: [g2-ch2r2] => (item=g2-zk2)
+ok: [g2-ch1r1] => (item=g2-zk2)
+ok: [g2-ch1r2] => (item=g2-zk2)
+ok: [g2-router] => (item=g2-zk2)
+ok: [g2-ch2r1] => (item=g2-zk2)
+ok: [g2-ch2r2] => (item=g2-zk3)
+ok: [g2-ch1r1] => (item=g2-zk3)
+ok: [g2-ch1r2] => (item=g2-zk3)
+ok: [g2-ch2r1] => (item=g2-zk3)
+ok: [g2-router] => (item=g2-zk3)
+ok: [g2-ch2r2] => (item=g2-load)
+ok: [g2-router] => (item=g2-load)
+ok: [g2-ch1r1] => (item=g2-load)
+ok: [g2-ch1r2] => (item=g2-load)
+ok: [g2-ch2r1] => (item=g2-load)
+ok: [g2-ch3r1] => (item=g2-router)
+ok: [g2-zk1] => (item=g2-router)
+ok: [g2-zk3] => (item=g2-router)
+ok: [g2-zk2] => (item=g2-router)
+ok: [g2-ch3r2] => (item=g2-router)
+ok: [g2-ch3r1] => (item=g2-ch1r1)
+ok: [g2-zk3] => (item=g2-ch1r1)
+ok: [g2-zk1] => (item=g2-ch1r1)
+ok: [g2-zk2] => (item=g2-ch1r1)
+ok: [g2-ch3r2] => (item=g2-ch1r1)
+ok: [g2-ch3r1] => (item=g2-ch1r2)
+ok: [g2-zk3] => (item=g2-ch1r2)
+ok: [g2-ch3r2] => (item=g2-ch1r2)
+ok: [g2-zk1] => (item=g2-ch1r2)
+ok: [g2-zk2] => (item=g2-ch1r2)
+ok: [g2-ch3r1] => (item=g2-ch2r1)
+ok: [g2-ch3r2] => (item=g2-ch2r1)
+ok: [g2-zk3] => (item=g2-ch2r1)
+ok: [g2-zk2] => (item=g2-ch2r1)
+ok: [g2-zk1] => (item=g2-ch2r1)
+ok: [g2-ch3r1] => (item=g2-ch2r2)
+ok: [g2-ch3r2] => (item=g2-ch2r2)
+ok: [g2-zk2] => (item=g2-ch2r2)
+ok: [g2-zk3] => (item=g2-ch2r2)
+ok: [g2-zk1] => (item=g2-ch2r2)
+ok: [g2-ch3r1] => (item=g2-ch3r1)
+ok: [g2-zk2] => (item=g2-ch3r1)
+ok: [g2-ch3r2] => (item=g2-ch3r1)
+ok: [g2-zk3] => (item=g2-ch3r1)
+ok: [g2-zk1] => (item=g2-ch3r1)
+ok: [g2-ch3r1] => (item=g2-ch3r2)
+ok: [g2-ch3r2] => (item=g2-ch3r2)
+ok: [g2-zk3] => (item=g2-ch3r2)
+ok: [g2-zk2] => (item=g2-ch3r2)
+ok: [g2-zk1] => (item=g2-ch3r2)
+ok: [g2-ch3r1] => (item=g2-zk1)
+ok: [g2-zk3] => (item=g2-zk1)
+ok: [g2-ch3r2] => (item=g2-zk1)
+ok: [g2-zk2] => (item=g2-zk1)
+ok: [g2-zk1] => (item=g2-zk1)
+ok: [g2-ch3r1] => (item=g2-zk2)
+ok: [g2-ch3r2] => (item=g2-zk2)
+ok: [g2-zk3] => (item=g2-zk2)
+ok: [g2-zk2] => (item=g2-zk2)
+ok: [g2-zk1] => (item=g2-zk2)
+ok: [g2-ch3r1] => (item=g2-zk3)
+ok: [g2-ch3r2] => (item=g2-zk3)
+ok: [g2-zk1] => (item=g2-zk3)
+ok: [g2-zk3] => (item=g2-zk3)
+ok: [g2-zk2] => (item=g2-zk3)
+ok: [g2-ch3r1] => (item=g2-load)
+ok: [g2-ch3r2] => (item=g2-load)
+ok: [g2-zk3] => (item=g2-load)
+ok: [g2-zk2] => (item=g2-load)
+ok: [g2-zk1] => (item=g2-load)
+ok: [g2-load] => (item=g2-router)
+ok: [g2-load] => (item=g2-ch1r1)
+ok: [g2-load] => (item=g2-ch1r2)
+ok: [g2-load] => (item=g2-ch2r1)
+ok: [g2-load] => (item=g2-ch2r2)
+ok: [g2-load] => (item=g2-ch3r1)
+ok: [g2-load] => (item=g2-ch3r2)
+ok: [g2-load] => (item=g2-zk1)
+ok: [g2-load] => (item=g2-zk2)
+ok: [g2-load] => (item=g2-zk3)
+ok: [g2-load] => (item=g2-load)
+
+TASK [Check corporate names] ***************************************************
+ok: [g2-ch1r1] => (item=g2-router)
+ok: [g2-router] => (item=g2-router)
+ok: [g2-ch1r2] => (item=g2-router)
+ok: [g2-ch2r1] => (item=g2-router)
+ok: [g2-ch2r2] => (item=g2-router)
+ok: [g2-ch1r1] => (item=g2-ch1r1)
+ok: [g2-router] => (item=g2-ch1r1)
+ok: [g2-ch2r1] => (item=g2-ch1r1)
+ok: [g2-ch1r2] => (item=g2-ch1r1)
+ok: [g2-ch2r2] => (item=g2-ch1r1)
+ok: [g2-ch1r1] => (item=g2-ch1r2)
+ok: [g2-router] => (item=g2-ch1r2)
+ok: [g2-ch1r2] => (item=g2-ch1r2)
+ok: [g2-ch2r2] => (item=g2-ch1r2)
+ok: [g2-ch2r1] => (item=g2-ch1r2)
+ok: [g2-ch1r1] => (item=g2-ch2r1)
+ok: [g2-ch1r2] => (item=g2-ch2r1)
+ok: [g2-router] => (item=g2-ch2r1)
+ok: [g2-ch2r1] => (item=g2-ch2r1)
+ok: [g2-ch2r2] => (item=g2-ch2r1)
+ok: [g2-ch1r1] => (item=g2-ch2r2)
+ok: [g2-ch1r2] => (item=g2-ch2r2)
+ok: [g2-ch2r1] => (item=g2-ch2r2)
+ok: [g2-router] => (item=g2-ch2r2)
+ok: [g2-ch2r2] => (item=g2-ch2r2)
+ok: [g2-ch1r2] => (item=g2-ch3r1)
+ok: [g2-ch1r1] => (item=g2-ch3r1)
+ok: [g2-ch2r1] => (item=g2-ch3r1)
+ok: [g2-router] => (item=g2-ch3r1)
+ok: [g2-ch2r2] => (item=g2-ch3r1)
+ok: [g2-ch1r2] => (item=g2-ch3r2)
+ok: [g2-ch2r1] => (item=g2-ch3r2)
+ok: [g2-ch1r1] => (item=g2-ch3r2)
+ok: [g2-ch2r2] => (item=g2-ch3r2)
+ok: [g2-router] => (item=g2-ch3r2)
+ok: [g2-ch2r1] => (item=g2-zk1)
+ok: [g2-ch1r2] => (item=g2-zk1)
+ok: [g2-ch1r1] => (item=g2-zk1)
+ok: [g2-router] => (item=g2-zk1)
+ok: [g2-ch2r2] => (item=g2-zk1)
+ok: [g2-ch1r2] => (item=g2-zk2)
+ok: [g2-ch1r1] => (item=g2-zk2)
+ok: [g2-ch2r1] => (item=g2-zk2)
+ok: [g2-router] => (item=g2-zk2)
+ok: [g2-ch2r2] => (item=g2-zk2)
+ok: [g2-ch1r2] => (item=g2-zk3)
+ok: [g2-ch1r1] => (item=g2-zk3)
+ok: [g2-ch2r2] => (item=g2-zk3)
+ok: [g2-ch2r1] => (item=g2-zk3)
+ok: [g2-router] => (item=g2-zk3)
+ok: [g2-ch1r1] => (item=g2-load)
+ok: [g2-ch1r2] => (item=g2-load)
+ok: [g2-ch2r2] => (item=g2-load)
+ok: [g2-ch2r1] => (item=g2-load)
+ok: [g2-router] => (item=g2-load)
+ok: [g2-ch3r1] => (item=g2-router)
+ok: [g2-ch3r2] => (item=g2-router)
+ok: [g2-zk1] => (item=g2-router)
+ok: [g2-zk2] => (item=g2-router)
+ok: [g2-zk3] => (item=g2-router)
+ok: [g2-ch3r1] => (item=g2-ch1r1)
+ok: [g2-zk1] => (item=g2-ch1r1)
+ok: [g2-ch3r2] => (item=g2-ch1r1)
+ok: [g2-zk2] => (item=g2-ch1r1)
+ok: [g2-zk3] => (item=g2-ch1r1)
+ok: [g2-ch3r1] => (item=g2-ch1r2)
+ok: [g2-zk1] => (item=g2-ch1r2)
+ok: [g2-ch3r2] => (item=g2-ch1r2)
+ok: [g2-zk3] => (item=g2-ch1r2)
+ok: [g2-zk2] => (item=g2-ch1r2)
+ok: [g2-ch3r1] => (item=g2-ch2r1)
+ok: [g2-ch3r2] => (item=g2-ch2r1)
+ok: [g2-zk1] => (item=g2-ch2r1)
+ok: [g2-zk2] => (item=g2-ch2r1)
+ok: [g2-ch3r1] => (item=g2-ch2r2)
+ok: [g2-zk3] => (item=g2-ch2r1)
+ok: [g2-ch3r2] => (item=g2-ch2r2)
+ok: [g2-zk1] => (item=g2-ch2r2)
+ok: [g2-zk2] => (item=g2-ch2r2)
+ok: [g2-ch3r1] => (item=g2-ch3r1)
+ok: [g2-zk3] => (item=g2-ch2r2)
+ok: [g2-zk1] => (item=g2-ch3r1)
+ok: [g2-ch3r2] => (item=g2-ch3r1)
+ok: [g2-ch3r1] => (item=g2-ch3r2)
+ok: [g2-zk2] => (item=g2-ch3r1)
+ok: [g2-zk3] => (item=g2-ch3r1)
+ok: [g2-zk1] => (item=g2-ch3r2)
+ok: [g2-ch3r2] => (item=g2-ch3r2)
+ok: [g2-ch3r1] => (item=g2-zk1)
+ok: [g2-zk2] => (item=g2-ch3r2)
+ok: [g2-zk3] => (item=g2-ch3r2)
+ok: [g2-zk1] => (item=g2-zk1)
+ok: [g2-ch3r2] => (item=g2-zk1)
+ok: [g2-ch3r1] => (item=g2-zk2)
+ok: [g2-zk2] => (item=g2-zk1)
+ok: [g2-zk3] => (item=g2-zk1)
+ok: [g2-zk1] => (item=g2-zk2)
+ok: [g2-ch3r2] => (item=g2-zk2)
+ok: [g2-ch3r1] => (item=g2-zk3)
+ok: [g2-zk2] => (item=g2-zk2)
+ok: [g2-zk3] => (item=g2-zk2)
+ok: [g2-zk1] => (item=g2-zk3)
+ok: [g2-ch3r2] => (item=g2-zk3)
+ok: [g2-ch3r1] => (item=g2-load)
+ok: [g2-zk2] => (item=g2-zk3)
+ok: [g2-zk3] => (item=g2-zk3)
+ok: [g2-zk1] => (item=g2-load)
+ok: [g2-ch3r2] => (item=g2-load)
+ok: [g2-load] => (item=g2-router)
+ok: [g2-zk2] => (item=g2-load)
+ok: [g2-zk3] => (item=g2-load)
+ok: [g2-load] => (item=g2-ch1r1)
+ok: [g2-load] => (item=g2-ch1r2)
+ok: [g2-load] => (item=g2-ch2r1)
+ok: [g2-load] => (item=g2-ch2r2)
+ok: [g2-load] => (item=g2-ch3r1)
+ok: [g2-load] => (item=g2-ch3r2)
+ok: [g2-load] => (item=g2-zk1)
+ok: [g2-load] => (item=g2-zk2)
+ok: [g2-load] => (item=g2-zk3)
+ok: [g2-load] => (item=g2-load)
+
+TASK [Check outgoing HTTPS and DNS] ********************************************
+ok: [g2-ch2r1]
+ok: [g2-ch2r2]
+ok: [g2-ch1r1]
+ok: [g2-ch1r2]
+ok: [g2-router]
+ok: [g2-ch3r1]
+ok: [g2-zk1]
+ok: [g2-ch3r2]
+ok: [g2-zk3]
+ok: [g2-zk2]
+ok: [g2-load]
+
+TASK [Inspect ClickHouse data disks] *******************************************
+skipping: [g2-router]
+ok: [g2-ch3r1]
+ok: [g2-ch1r1]
+ok: [g2-ch2r1]
+skipping: [g2-zk1]
+skipping: [g2-zk2]
+skipping: [g2-zk3]
+skipping: [g2-load]
+ok: [g2-ch1r2]
+ok: [g2-ch2r2]
+ok: [g2-ch3r2]
+
+TASK [Validate data disk count and size] ***************************************
+skipping: [g2-router]
+ok: [g2-ch1r1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch2r1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch1r2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch2r2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+skipping: [g2-zk1]
+ok: [g2-ch3r1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+skipping: [g2-zk2]
+ok: [g2-ch3r2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+skipping: [g2-zk3]
+skipping: [g2-load]
+
+TASK [Show cross-DC path] ******************************************************
+skipping: [g2-router]
+skipping: [g2-ch1r2]
+skipping: [g2-ch2r1]
+skipping: [g2-ch2r2]
+skipping: [g2-ch3r1]
+skipping: [g2-ch3r2]
+skipping: [g2-zk1]
+skipping: [g2-zk2]
+skipping: [g2-zk3]
+skipping: [g2-load]
+ok: [g2-ch1r1]
+
+TASK [Verify effective SSH policy] *********************************************
+ok: [g2-ch1r1]
+ok: [g2-ch1r2]
+ok: [g2-ch2r1]
+ok: [g2-router]
+ok: [g2-ch2r2]
+ok: [g2-zk1]
+ok: [g2-zk3]
+ok: [g2-ch3r1]
+ok: [g2-ch3r2]
+ok: [g2-zk2]
+ok: [g2-load]
+
+TASK [Require key-only SSH] ****************************************************
+ok: [g2-router] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch1r1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch1r2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch2r1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch3r1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch2r2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-zk1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-ch3r2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-zk2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-zk3] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-load] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Check serial console is available] ***************************************
+ok: [g2-ch1r1]
+ok: [g2-ch2r2]
+ok: [g2-router]
+ok: [g2-ch2r1]
+ok: [g2-ch1r2]
+ok: [g2-zk1]
+ok: [g2-ch3r1]
+ok: [g2-zk3]
+ok: [g2-ch3r2]
+ok: [g2-zk2]
+ok: [g2-load]
+
+TASK [Check break-glass password is set] ***************************************
+ok: [g2-ch1r2]
+ok: [g2-ch2r2]
+ok: [g2-ch1r1]
+ok: [g2-ch2r1]
+ok: [g2-router]
+ok: [g2-zk3]
+ok: [g2-ch3r2]
+ok: [g2-zk2]
+ok: [g2-zk1]
+ok: [g2-ch3r1]
+ok: [g2-load]
+
+PLAY RECAP *********************************************************************
+g2-ch1r1                   : ok=13   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-ch1r2                   : ok=12   changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+g2-ch2r1                   : ok=12   changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+g2-ch2r2                   : ok=12   changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+g2-ch3r1                   : ok=12   changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+g2-ch3r2                   : ok=12   changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+g2-load                    : ok=10   changed=0    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+g2-router                  : ok=10   changed=0    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+g2-zk1                     : ok=10   changed=0    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+g2-zk2                     : ok=10   changed=0    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+g2-zk3                     : ok=10   changed=0    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+lab                        : ok=4    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

@@ -1,0 +1,66 @@
+---
+- name: Explicitly remove only ITMO group 2 resources
+  hosts: hypervisors
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Require explicit destructive confirmation and fixed namespace
+      ansible.builtin.assert:
+        that:
+          - confirm_destroy | default('') == 'itmo-g2'
+          - lab_prefix == 'g2-'
+          - lab_dir == '/var/lib/libvirt/images/itmo-g2'
+          - lab_vms | rejectattr('name', 'match', '^g2-') | list | length == 0
+        fail_msg: 'All lab disks will be lost. Pass -e confirm_destroy=itmo-g2 explicitly.'
+    - name: Refuse destruction while a chaos experiment is active
+      ansible.builtin.stat:
+        path: /var/lib/itmo-g2-chaos/active.json
+      register: chaos_state
+    - name: Require completed chaos rollback
+      ansible.builtin.assert:
+        that: not chaos_state.stat.exists
+    - name: Read active VMs
+      ansible.builtin.command: virsh list --name
+      register: active_vms
+      changed_when: false
+    - name: Power off lab VMs
+      ansible.builtin.command: "virsh destroy {{ item.name }}"
+      loop: "{{ lab_vms }}"
+      when: item.name in active_vms.stdout_lines
+      changed_when: true
+    - name: Read defined VMs
+      ansible.builtin.command: virsh list --all --name
+      register: defined_vms
+      changed_when: false
+    - name: Undefine lab VMs
+      ansible.builtin.command: "virsh undefine {{ item.name }}"
+      loop: "{{ lab_vms }}"
+      when: item.name in defined_vms.stdout_lines
+      changed_when: true
+    - name: Stop persistent lab routes
+      ansible.builtin.systemd_service:
+        name: itmo-g2-routes
+        state: stopped
+        enabled: false
+    - name: Read active networks
+      ansible.builtin.command: virsh net-list --name
+      register: active_nets
+      changed_when: false
+    - name: Stop lab networks
+      ansible.builtin.command: "virsh net-destroy {{ lab_prefix }}{{ item.name }}"
+      loop: "{{ lab_networks }}"
+      when: (lab_prefix + item.name) in active_nets.stdout_lines
+      changed_when: true
+    - name: Read defined networks
+      ansible.builtin.command: virsh net-list --all --name
+      register: defined_nets
+      changed_when: false
+    - name: Undefine lab networks
+      ansible.builtin.command: "virsh net-undefine {{ lab_prefix }}{{ item.name }}"
+      loop: "{{ lab_networks }}"
+      when: (lab_prefix + item.name) in defined_nets.stdout_lines
+      changed_when: true
+    - name: Remove only managed lab disks and seeds
+      ansible.builtin.file:
+        path: "{{ lab_dir }}"
+        state: absent

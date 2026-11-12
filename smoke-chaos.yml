@@ -1,0 +1,59 @@
+---
+- name: Register guests for bounded network experiments
+  hosts: hypervisors
+  gather_facts: false
+  tasks:
+    - name: Load guest inventory
+      ansible.builtin.include_tasks: playbooks/inventory.yml
+
+- name: Validate automatic rollback on router
+  hosts: router
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Test one router scenario at a time
+      ansible.builtin.include_tasks: playbooks/smoke-router.yml
+      loop: [wan, asymmetric, mtu]
+      loop_control:
+        loop_var: scenario
+
+- name: Validate local ZooKeeper isolation rollback
+  hosts: g2-ch1r1
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Start timed ZooKeeper isolation
+      ansible.builtin.command: g2-chaos isolate-zk --node 10.22.1.11 --seconds 10
+      changed_when: true
+    - name: Inspect active isolation rules
+      ansible.builtin.command: nft list table inet g2_chaos
+      changed_when: false
+    - name: Wait for automatic cleanup
+      ansible.builtin.wait_for:
+        path: /var/lib/itmo-g2-chaos/active.json
+        state: absent
+        timeout: 40
+    - name: Verify isolation table is removed
+      ansible.builtin.command: nft list tables
+      register: tables_after
+      changed_when: false
+      failed_when: "'table inet g2_chaos' in tables_after.stdout"
+
+- name: Validate bridge and DC rollback on hypervisor
+  hosts: hypervisors
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Test one host scenario at a time
+      ansible.builtin.include_tasks: playbooks/smoke-host.yml
+      loop: [switch, dc]
+      loop_control:
+        loop_var: scenario
+
+- name: Recheck all restored guests
+  hosts: lab_guests
+  gather_facts: false
+  tasks:
+    - name: Wait for SSH after automatic recovery
+      ansible.builtin.wait_for_connection:
+        timeout: 300

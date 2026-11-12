@@ -1,0 +1,62 @@
+---
+- name: Verify two-DC outage and automatic recovery
+  hosts: hypervisors
+  become: true
+  gather_facts: false
+  vars:
+    outage_dcs: [dc2, dc3]
+  tasks:
+    - name: Discover guest inventory
+      ansible.builtin.include_tasks: playbooks/inventory.yml
+    - name: Record running domains before experiment
+      ansible.builtin.command: virsh list --name
+      register: baseline_domains
+      changed_when: false
+    - name: Require all lab guests to be running for this smoke test
+      ansible.builtin.assert:
+        that: item.name in baseline_domains.stdout_lines
+      loop: "{{ lab_vms }}"
+      loop_control:
+        label: "{{ item.name }}"
+    - name: Install the tested fault runner
+      ansible.builtin.copy:
+        src: scripts/chaos.py
+        dest: /usr/local/sbin/g2-chaos
+        mode: '0755'
+    - name: Start a timed outage of dc2 and dc3
+      ansible.builtin.command: g2-chaos two-dc --dc dc2 --peer dc3 --seconds 30
+      register: outage_result
+      changed_when: true
+    - name: Record the rollback timer identifier
+      ansible.builtin.debug:
+        var: outage_result.stdout_lines
+    - name: Inspect domains during outage
+      ansible.builtin.command: virsh list --name
+      register: outage_domains
+      changed_when: false
+    - name: Verify exactly the selected running nodes were powered off
+      ansible.builtin.assert:
+        that: >-
+          (outage_domains.stdout_lines | reject('equalto', '') | sort) ==
+          (baseline_domains.stdout_lines | reject('equalto', '') |
+          difference(lab_vms | selectattr('dc', 'in', outage_dcs) | map(attribute='name') | list) | sort)
+    - name: Wait for automatic rollback
+      ansible.builtin.wait_for:
+        path: /var/lib/itmo-g2-chaos/active.json
+        state: absent
+        timeout: 120
+    - name: Read restored domains
+      ansible.builtin.command: virsh list --name
+      register: recovered_domains
+      changed_when: false
+    - name: Verify all originally running domains were restored
+      ansible.builtin.assert:
+        that: (recovered_domains.stdout_lines | sort) == (baseline_domains.stdout_lines | sort)
+
+- name: Verify SSH recovery on every lab guest
+  hosts: lab_guests
+  gather_facts: false
+  tasks:
+    - name: Wait for SSH after domain startup
+      ansible.builtin.wait_for_connection:
+        timeout: 300

@@ -1,0 +1,13 @@
+---
+- name: Register guest connections through hypervisor
+  ansible.builtin.add_host:
+    name: "{{ item.name }}"
+    groups: "lab_guests,{{ item.role }},{{ item.dc }}"
+    ansible_host: "{{ item.ip }}"
+    ansible_user: "{{ lab_user }}"
+    ansible_ssh_common_args: "-o ProxyJump={{ ansible_user }}@{{ ansible_host }} -o StrictHostKeyChecking=accept-new"
+    vm: "{{ item }}"
+  loop: "{{ lab_vms }}"
+  loop_control:
+    label: "{{ item.name }}"
+  changed_when: false

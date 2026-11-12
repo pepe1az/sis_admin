@@ -1,0 +1,8 @@
+<network>
+  <name>{{ lab_prefix }}{{ item.name }}</name>
+  <bridge name="{{ item.bridge }}" stp="off" delay="0"/>
+{% if item.name == 'wan' %}
+  <forward mode="nat"/>
+  <ip address="{{ item.gateway }}" prefix="24"/>
+{% endif %}
+</network>

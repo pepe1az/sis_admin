@@ -1,0 +1,64 @@
+---
+- name: Start bounded router experiment
+  ansible.builtin.command: "g2-chaos {{ scenario }} --dc dc1 --seconds 20 --loss 0 --corrupt 0 --reorder 0"
+  changed_when: true
+- name: Inspect current qdiscs
+  ansible.builtin.command: tc -j qdisc show dev dc1
+  register: active_qdiscs
+  changed_when: false
+- name: Verify netem was installed
+  ansible.builtin.assert:
+    that: active_qdiscs.stdout | from_json | selectattr('kind', 'equalto', 'netem') | list | length == 1
+  when: scenario == 'wan'
+- name: Inspect active fault rules
+  ansible.builtin.command: nft list table inet g2_chaos
+  changed_when: false
+  when: scenario != 'wan'
+- name: Measure cross-DC delay while netem is active
+  ansible.builtin.command: ping -n -c 3 -W 3 10.22.1.11
+  delegate_to: g2-ch1r2
+  register: delayed_ping
+  changed_when: false
+  when: scenario == 'wan'
+- name: Verify WAN delay affects actual traffic
+  ansible.builtin.assert:
+    that: "(delayed_ping.stdout | regex_findall('rtt.* = [0-9.]+/([0-9.]+)/') | first | float) > 50"
+  when: scenario == 'wan'
+- name: Check asymmetry blocks cross-DC ping
+  ansible.builtin.command: ping -n -c 1 -W 2 10.22.2.11
+  delegate_to: g2-ch1r1
+  register: blocked_ping
+  changed_when: false
+  failed_when: blocked_ping.rc != 1
+  when: scenario == 'asymmetric'
+- name: Check oversized DF packets hit the MTU black hole
+  ansible.builtin.command: ping -n -M do -s 1400 -c 1 -W 2 10.22.1.11
+  delegate_to: g2-ch1r2
+  register: mtu_ping
+  changed_when: false
+  failed_when: mtu_ping.rc != 1
+  when: scenario == 'mtu'
+- name: Wait for timer to clear active state
+  ansible.builtin.wait_for:
+    path: /var/lib/itmo-g2-chaos/active.json
+    state: absent
+    timeout: 40
+- name: Read qdiscs after rollback
+  ansible.builtin.command: tc -j qdisc show dev dc1
+  register: restored_qdiscs
+  changed_when: false
+- name: Verify netem was removed
+  ansible.builtin.assert:
+    that: restored_qdiscs.stdout | from_json | selectattr('kind', 'equalto', 'netem') | list | length == 0
+- name: Read interface after rollback
+  ansible.builtin.command: ip -j link show dc1
+  register: restored_interface
+  changed_when: false
+- name: Verify restored MTU
+  ansible.builtin.assert:
+    that: (restored_interface.stdout | from_json | first).mtu == 1500
+- name: Verify fault table was removed
+  ansible.builtin.command: nft list tables
+  register: restored_tables
+  changed_when: false
+  failed_when: "'table inet g2_chaos' in restored_tables.stdout"

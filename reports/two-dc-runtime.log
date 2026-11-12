@@ -1,0 +1,29 @@
+2026-11-13T01:51:04+0300 BEGIN g2-rollback-1794523864528119682 two-dc --dc dc2 --peer dc3 --seconds 30
+2026-11-13T01:51:04+0300 APPLY virsh destroy g2-ch1r2
+2026-11-13T01:51:05+0300 APPLY virsh destroy g2-ch2r1
+2026-11-13T01:51:05+0300 APPLY virsh destroy g2-ch2r2
+2026-11-13T01:51:05+0300 APPLY virsh destroy g2-ch3r1
+2026-11-13T01:51:06+0300 APPLY virsh destroy g2-zk2
+2026-11-13T01:51:06+0300 APPLY virsh destroy g2-zk3
+2026-11-13T01:51:07+0300 ARMED automatic rollback in 30s; unit=g2-rollback-1794523864528119682.timer
+2026-11-13T01:51:44+0300 ROLLBACK OK g2-rollback-1794523864528119682
+ Id   Name        State
+---------------------------
+ 14   g2-router   running
+ 15   g2-ch1r1    running
+ 20   g2-ch3r2    running
+ 21   g2-zk1      running
+ 24   g2-load     running
+ 28   g2-zk3      running
+ 29   g2-zk2      running
+ 30   g2-ch3r1    running
+ 31   g2-ch2r2    running
+ 32   g2-ch2r1    running
+ 33   g2-ch1r2    running
+
+active
+active
+active
+active
+active
+active

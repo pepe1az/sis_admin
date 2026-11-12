@@ -1,0 +1,55 @@
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+wan0             UP             172.30.2.2/24 fe80::5054:ff:fe22:1/64 
+dc1              UP             10.22.1.1/24 fe80::5054:ff:fe22:2/64 
+dc2              UP             10.22.2.1/24 fe80::5054:ff:fe22:3/64 
+dc3              UP             10.22.3.1/24 fe80::5054:ff:fe22:4/64 
+default via 172.30.2.1 dev wan0 proto static 
+10.22.1.0/24 dev dc1 proto kernel scope link src 10.22.1.1 
+10.22.2.0/24 dev dc2 proto kernel scope link src 10.22.2.1 
+10.22.3.0/24 dev dc3 proto kernel scope link src 10.22.3.1 
+172.30.2.0/24 dev wan0 proto kernel scope link src 172.30.2.2 
+table inet g2_router {
+	chain input {
+		type filter hook input priority filter; policy drop;
+		iifname "lo" accept
+		ct state established,related accept
+		ip protocol icmp accept
+		ip saddr 172.30.2.1 tcp dport 22 accept
+	}
+
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+		ct state established,related accept
+		iifname { "dc1", "dc2", "dc3" } oifname { "dc1", "dc2", "dc3", "wan0" } accept
+		iifname "wan0" ip saddr 172.30.2.1 oifname { "dc1", "dc2", "dc3" } accept
+	}
+}
+table ip g2_nat {
+	chain postrouting {
+		type nat hook postrouting priority srcnat; policy accept;
+		ip saddr { 10.22.1.0-10.22.3.255 } oifname "wan0" masquerade
+	}
+}
+2026-11-09T10:00:26+0000 BEGIN g2-rollback-1794218426587304267 wan --dc dc1 --seconds 20 --loss 0 --corrupt 0 --reorder 0
+2026-11-09T10:00:26+0000 APPLY tc qdisc add dev dc1 root handle 1: prio bands 3 priomap 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+2026-11-09T10:00:26+0000 APPLY tc qdisc add dev dc1 parent 1:1 handle 10: netem delay 100ms 10ms loss 0.0% corrupt 0.0% reorder 0.0%
+2026-11-09T10:00:26+0000 APPLY tc filter add dev dc1 protocol ip parent 1: prio 1 u32 match ip src 10.22.2.0/24 match ip dst 10.22.1.0/24 flowid 1:1
+2026-11-09T10:00:26+0000 APPLY tc filter add dev dc1 protocol ip parent 1: prio 1 u32 match ip src 10.22.3.0/24 match ip dst 10.22.1.0/24 flowid 1:1
+2026-11-09T10:00:26+0000 ARMED automatic rollback in 20s; unit=g2-rollback-1794218426587304267.timer
+2026-11-09T10:00:49+0000 ROLLBACK OK g2-rollback-1794218426587304267
+2026-11-09T10:01:48+0000 BEGIN g2-rollback-1794218508447528259 wan --dc dc1 --seconds 20 --loss 0 --corrupt 0 --reorder 0
+2026-11-09T10:01:48+0000 APPLY tc qdisc add dev dc1 root handle 1: prio bands 3 priomap 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+2026-11-09T10:01:48+0000 APPLY tc qdisc add dev dc1 parent 1:1 handle 10: netem delay 100ms 10ms loss 0.0% corrupt 0.0% reorder 0.0%
+2026-11-09T10:01:48+0000 APPLY tc filter add dev dc1 protocol ip parent 1: prio 1 u32 match ip src 10.22.2.0/24 match ip dst 10.22.1.0/24 flowid 1:1
+2026-11-09T10:01:48+0000 APPLY tc filter add dev dc1 protocol ip parent 1: prio 1 u32 match ip src 10.22.3.0/24 match ip dst 10.22.1.0/24 flowid 1:1
+2026-11-09T10:01:48+0000 ARMED automatic rollback in 20s; unit=g2-rollback-1794218508447528259.timer
+2026-11-09T10:02:08+0000 ROLLBACK OK g2-rollback-1794218508447528259
+2026-11-09T10:02:12+0000 BEGIN g2-rollback-1794218532243381596 asymmetric --dc dc1 --seconds 20 --loss 0 --corrupt 0 --reorder 0
+2026-11-09T10:02:12+0000 APPLY nft -f /var/lib/itmo-g2-chaos/rules.nft
+2026-11-09T10:02:12+0000 ARMED automatic rollback in 20s; unit=g2-rollback-1794218532243381596.timer
+2026-11-09T10:02:32+0000 ROLLBACK OK g2-rollback-1794218532243381596
+2026-11-09T10:02:36+0000 BEGIN g2-rollback-1794218556573430256 mtu --dc dc1 --seconds 20 --loss 0 --corrupt 0 --reorder 0
+2026-11-09T10:02:36+0000 APPLY ip link set dc1 mtu 576
+2026-11-09T10:02:36+0000 APPLY nft -f /var/lib/itmo-g2-chaos/rules.nft
+2026-11-09T10:02:36+0000 ARMED automatic rollback in 20s; unit=g2-rollback-1794218556573430256.timer
+2026-11-09T10:02:56+0000 ROLLBACK OK g2-rollback-1794218556573430256

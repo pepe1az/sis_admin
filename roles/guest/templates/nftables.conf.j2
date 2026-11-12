@@ -1,0 +1,12 @@
+#!/usr/sbin/nft -f
+flush ruleset
+table inet g2_zookeeper {
+  chain input {
+    type filter hook input priority 0; policy accept;
+    iifname "lo" accept
+    ip saddr { {{ (lab_vms | selectattr('role', 'equalto', 'clickhouse') | map(attribute='ip') | list + lab_monitoring_sources) | join(', ') }} } tcp dport 2181 accept
+    tcp dport 2181 drop
+    ip saddr { {{ lab_vms | selectattr('role', 'equalto', 'zookeeper') | map(attribute='ip') | join(', ') }} } tcp dport { 2888, 3888 } accept
+    tcp dport { 2888, 3888 } drop
+  }
+}

@@ -1,0 +1,22 @@
+#cloud-config
+hostname: {{ vm.name }}
+fqdn: {{ vm.name }}.{{ lab_domain }}
+manage_etc_hosts: false
+ssh_pwauth: false
+disable_root: true
+users:
+  - name: {{ lab_user }}
+    shell: /bin/bash
+    lock_passwd: true
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - {{ lookup('file', lab_public_key_file) }}
+write_files:
+  - path: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+    content: 'network: {config: disabled}'
+  - path: /etc/ssh/sshd_config.d/20-itmo.conf
+    content: |
+      PasswordAuthentication no
+      PermitRootLogin no
+runcmd:
+  - [systemctl, enable, --now, serial-getty@ttyS0.service]

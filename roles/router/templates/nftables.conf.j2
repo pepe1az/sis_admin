@@ -1,0 +1,24 @@
+#!/usr/sbin/nft -f
+# This VM is dedicated to routing. Host firewall is not touched.
+flush ruleset
+table inet g2_router {
+  chain input {
+    type filter hook input priority 0; policy drop;
+    iifname "lo" accept
+    ct state established,related accept
+    ip protocol icmp accept
+    ip saddr 172.30.2.1 tcp dport 22 accept
+  }
+  chain forward {
+    type filter hook forward priority 0; policy drop;
+    ct state established,related accept
+    iifname { "dc1", "dc2", "dc3" } oifname { "dc1", "dc2", "dc3", "wan0" } accept
+    iifname "wan0" ip saddr 172.30.2.1 oifname { "dc1", "dc2", "dc3" } accept
+  }
+}
+table ip g2_nat {
+  chain postrouting {
+    type nat hook postrouting priority srcnat; policy accept;
+    ip saddr { 10.22.1.0/24, 10.22.2.0/24, 10.22.3.0/24 } oifname "wan0" masquerade
+  }
+}

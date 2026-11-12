@@ -1,0 +1,42 @@
+---
+- name: Prepare KVM host and create virtual machines
+  hosts: hypervisors
+  become: true
+  roles:
+    - hypervisor
+  tasks:
+    - name: Provision each VM
+      ansible.builtin.include_role:
+        name: vm
+      loop: "{{ lab_vms }}"
+      loop_control:
+        loop_var: vm
+        label: "{{ vm.name }}"
+    - name: Add guests to in-memory inventory
+      ansible.builtin.include_tasks: playbooks/inventory.yml
+
+- name: Configure WAN router first
+  hosts: router
+  become: true
+  gather_facts: false
+  pre_tasks:
+    - name: Wait for router SSH
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+    - name: Read facts
+      ansible.builtin.setup:
+  roles:
+    - router
+
+- name: Configure Debian guests
+  hosts: lab_guests
+  become: true
+  gather_facts: false
+  pre_tasks:
+    - name: Wait for guest SSH
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+    - name: Read facts
+      ansible.builtin.setup:
+  roles:
+    - guest
