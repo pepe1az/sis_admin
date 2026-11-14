@@ -1,0 +1,57 @@
+---
+- name: Выбрать локальный инстанс для генератора нагрузки
+  ansible.builtin.set_fact:
+    clickhouse_load_instance: >-
+      {{ clickhouse_instances
+         | selectattr('host', 'equalto', inventory_hostname) | first }}
+
+- name: Создать каталог логов нагрузки
+  ansible.builtin.file:
+    path: "{{ clickhouse_load_log | dirname }}"
+    state: directory
+    owner: clickhouse
+    group: clickhouse
+    mode: "0750"
+
+- name: Установить скрипт генерации нагрузки
+  ansible.builtin.template:
+    src: clickhouse-load.sh.j2
+    dest: /usr/local/bin/clickhouse-load.sh
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart clickhouse load
+
+- name: Установить переменные окружения (пароль) для генератора
+  ansible.builtin.template:
+    src: clickhouse-load.env.j2
+    dest: /etc/default/clickhouse-load
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Restart clickhouse load
+
+- name: Установить systemd-юнит генератора нагрузки
+  ansible.builtin.template:
+    src: clickhouse-load.service.j2
+    dest: /etc/systemd/system/clickhouse-load.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart clickhouse load
+
+- name: Запустить генератор нагрузки
+  ansible.builtin.systemd_service:
+    name: clickhouse-load.service
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: clickhouse_load_enabled | bool
+
+- name: Остановить генератор нагрузки
+  ansible.builtin.systemd_service:
+    name: clickhouse-load.service
+    enabled: false
+    state: stopped
+  when: not (clickhouse_load_enabled | bool)

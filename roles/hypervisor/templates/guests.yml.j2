@@ -4,7 +4,7 @@ all:
     ansible_user: {{ lab_user }}
     ansible_ssh_common_args: '-o ProxyJump={{ ansible_user }}@{{ ansible_host }} -o StrictHostKeyChecking=accept-new'
   children:
-{% for role in ['router', 'clickhouse', 'zookeeper', 'load'] %}
+{% for role in ['router', 'clickhouse', 'load'] %}
     {{ role }}:
       hosts:
 {% for node in lab_vms if node.role == role %}
@@ -12,6 +12,9 @@ all:
           ansible_host: {{ node.ip }}
           dc: {{ node.dc }}
 {% if node.role == 'clickhouse' %}
+{% if node.keeper | default(false) %}
+          keeper: true
+{% endif %}
           shard: {{ node.shard }}
           replica: {{ node.replica }}
           raid_level: {{ node.raid_level }}

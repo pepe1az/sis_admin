@@ -13,6 +13,7 @@ all:
       hosts:
         g2-ch1r1:
           ansible_host: 10.22.1.11
+          keeper: true
           dc: dc1
           shard: 1
           replica: 1
@@ -27,6 +28,7 @@ all:
           data_disks: [vdb, vdc, vdd, vde]
         g2-ch2r1:
           ansible_host: 10.22.2.12
+          keeper: true
           dc: dc2
           shard: 2
           replica: 1
@@ -41,6 +43,7 @@ all:
           data_disks: [vdb, vdc, vdd, vde]
         g2-ch3r1:
           ansible_host: 10.22.3.13
+          keeper: true
           dc: dc3
           shard: 3
           replica: 1
@@ -53,17 +56,6 @@ all:
           replica: 2
           raid_level: 6
           data_disks: [vdb, vdc, vdd, vde]
-    zookeeper:
-      hosts:
-        g2-zk1:
-          ansible_host: 10.22.1.21
-          dc: dc1
-        g2-zk2:
-          ansible_host: 10.22.2.21
-          dc: dc2
-        g2-zk3:
-          ansible_host: 10.22.3.21
-          dc: dc3
     load:
       hosts:
         g2-load:

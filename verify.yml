@@ -67,7 +67,7 @@
             | map(attribute='size') | unique | list == [lab_data_disk_gb * 1024 * 1024 * 1024]
       when: vm.role == 'clickhouse'
     - name: Show cross-DC path
-      ansible.builtin.command: traceroute -n -I -m 4 -w 1 10.22.2.21
+      ansible.builtin.command: traceroute -n -I -m 4 -w 1 10.22.2.11
       changed_when: false
       when: inventory_hostname == 'g2-ch1r1'
     - name: Verify effective SSH policy

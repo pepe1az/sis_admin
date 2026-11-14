@@ -1,0 +1,7 @@
+---
+- name: Restart clickhouse instances
+  ansible.builtin.systemd_service:
+    name: "clickhouse-server@{{ item.name }}.service"
+    state: restarted
+    daemon_reload: true
+  loop: "{{ clickhouse_role_instances }}"

@@ -1,6 +1,6 @@
 # ITMO 2026 — группа 2: виртуальные машины и сеть
 
-Ansible создаёт KVM/libvirt-стенд из 11 ВМ Debian 13: маршрутизатор, 6 ClickHouse, 3 ZooKeeper и генератор нагрузки. Три ДЦ представлены отдельными Linux-мостами. Реплики одного шарда размещены в разных ДЦ.
+Ansible создаёт KVM/libvirt-стенд из 8 ВМ Debian 13: маршрутизатор, 6 ClickHouse и генератор нагрузки. Три ДЦ представлены отдельными Linux-мостами. Реплики одного шарда размещены в разных ДЦ, а координацию ClickHouse обеспечивает ClickHouse Keeper на трёх ClickHouse-ВМ.
 
 Задание: https://github.com/Ravino/devops_education/tree/main/itmo-sysadm-2026
 
@@ -24,22 +24,25 @@ python3 -m venv .venv
 
 ## Что создаётся
 
-- Роли `hypervisor`, `vm`, `router`, `guest`; Ansible Collections не требуются.
+- Базовые роли `hypervisor`, `vm`, `router`, `guest`; Ansible Collections не требуются.
+- Отдельный плейбук `clickhouse.yml` и роли ClickHouse/Keeper; см. [инструкцию](docs/clickhouse.md).
 - Четыре сети libvirt: WAN с NAT и три L2-моста ДЦ без адресов гипервизора.
 - ВМ из фиксированного официального cloud-образа Debian с проверкой SHA-512, NoCloud и статическими MAC/IP.
 - 24 пустых диска для RAID, гостевой агент QEMU, сетевые инструменты, chrony и временный `/etc/hosts`.
-- Маршрутизация и firewall на router; ограничение портов ZooKeeper 2181/2888/3888.
+- Маршрутизация и firewall на router; порты Keeper 9181/9234/9365 и метрик ClickHouse ограничены nftables на узлах ClickHouse.
 - Технический пользователь `ansible` для автоматизации, SSH только по ключу; аварийный пароль только для консоли.
-- `inventory/guests.generated.yml` для участников команды: группы clickhouse/zookeeper/load/router, IP, shard, replica, raid_level.
-- Скрипты сетевых экспериментов с таймером отката и журналированием; отдельные точки входа `scripts/{wan,isolate-zk,asymmetric,mtu,switch,dc,two-dc}.sh` запускаются на соответствующей целевой машине.
+- `inventory/guests.generated.yml` для участников команды: группы clickhouse/load/router, IP, shard, replica, raid_level; у трёх узлов стоит `keeper: true`.
+- Скрипты сетевых экспериментов с таймером отката и журналированием; отдельные точки входа `scripts/{wan,isolate-keeper,asymmetric,mtu,switch,dc,two-dc}.sh` запускаются на соответствующей целевой машине.
 
 [IP-план и схема](docs/ip-plan.md), [ранбуки](docs/runbooks.md), [результаты проверки](docs/validation.md), [журнал ИИ](docs/ai-log.md).
 
-Сервисы ClickHouse, ZooKeeper, генератор нагрузки, RAID/LVM/XFS, SSSD и агенты мониторинга здесь не устанавливаются: для них подготовлены ВМ и inventory. Корпоративный вход пользователей подключает группа 3; техническая учётная запись не заменяет SSSD.
+Кластер ClickHouse + ClickHouse Keeper и генератор нагрузки разворачиваются отдельно командой `ansible-playbook clickhouse.yml` (см. [docs/clickhouse.md](docs/clickhouse.md)). RAID/LVM/XFS, SSSD и агенты мониторинга здесь не устанавливаются: для них подготовлены ВМ и inventory. ZooKeeper-заглушки `g2-zk1..3` из прежнего IP-плана удалены; координацию выполняет Keeper. Корпоративный вход пользователей подключает группа 3; техническая учётная запись не заменяет SSSD.
+
+Если на стенде остались старые `g2-zk*`, удалите их один раз командой `.venv/bin/ansible-playbook cleanup-zookeeper.yml`; `destroy.yml` и `rebuild.yml` также учитывают legacy-имена.
 
 ## Ресурсы и ограничения
 
-Тестовый профиль: 8.5 ГиБ RAM суммарно гостям, 1 vCPU каждой ВМ; хосту оставляется минимум 2 ГиБ. Это профиль для проверки инфраструктуры. Перед нагрузочными тестами увеличьте RAM ClickHouse и ZooKeeper по согласованию с командой.
+Тестовый профиль: 7 ГиБ RAM суммарно гостям, 1 vCPU каждой ВМ; хосту оставляется минимум 2 ГиБ. Это профиль для проверки инфраструктуры. Перед нагрузочными тестами увеличьте RAM ClickHouse по согласованию с командой.
 
 Диски qcow2 разреженные: 120 ГиБ логического пространства под RAID плюс корневые диски. На тестовом сервере около 85 ГиБ было свободно до установки, поэтому полностью заполнить все виртуальные диски нельзя. Для нагрузочных/дисковых сценариев нужен больший физический том; следите за `df -h /var/lib/libvirt/images`. Удаление гостевых файлов само по себе не гарантирует возврат места qcow2.
 

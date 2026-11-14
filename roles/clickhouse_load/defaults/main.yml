@@ -1,0 +1,6 @@
+---
+clickhouse_load_enabled: true
+clickhouse_load_interval_seconds: 1
+clickhouse_load_batch_rows: 200
+clickhouse_load_analytics_every: 10
+clickhouse_load_log: "/var/log/clickhouse-load/load.log"

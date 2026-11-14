@@ -1,0 +1,18 @@
+[Unit]
+Description=ClickHouse synthetic load generator (inserts + analytics)
+After=network-online.target clickhouse-server@{{ clickhouse_load_instance.name }}.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=clickhouse
+Group=clickhouse
+EnvironmentFile=/etc/default/clickhouse-load
+ExecStart=/usr/local/bin/clickhouse-load.sh
+Restart=always
+RestartSec=5
+Nice=10
+LimitNOFILE=500000
+
+[Install]
+WantedBy=multi-user.target

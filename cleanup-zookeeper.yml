@@ -1,0 +1,50 @@
+---
+# Однократная миграция: удалить три старые ZooKeeper-заглушки g2-zk1..3.
+# ClickHouse координируется через ClickHouse Keeper на g2-ch1r1/ch2r1/ch3r1.
+# Другие ВМ, сети и маршрутизатор не затрагиваются.
+#
+# Запуск:
+#   .venv/bin/ansible-playbook cleanup-zookeeper.yml
+- name: Remove legacy ZooKeeper placeholder VMs
+  hosts: hypervisors
+  become: true
+  gather_facts: false
+  vars:
+    legacy_vms: "{{ lab_legacy_vms | default([]) }}"
+  tasks:
+    - name: Restrict cleanup to the fixed lab namespace
+      ansible.builtin.assert:
+        that:
+          - lab_dir == '/var/lib/libvirt/images/itmo-g2'
+          - legacy_vms | length == 3
+          - legacy_vms | rejectattr('name', 'match', '^g2-zk[0-9]+$') | list | length == 0
+        fail_msg: 'Cleanup only removes the known g2-zk* placeholders.'
+        quiet: true
+
+    - name: Read running domains
+      ansible.builtin.command: virsh list --name
+      register: legacy_running
+      changed_when: false
+
+    - name: Power off legacy ZooKeeper VMs
+      ansible.builtin.command: "virsh destroy {{ item.name }}"
+      loop: "{{ legacy_vms }}"
+      when: item.name in legacy_running.stdout_lines
+      changed_when: true
+
+    - name: Read defined domains
+      ansible.builtin.command: virsh list --all --name
+      register: legacy_defined
+      changed_when: false
+
+    - name: Undefine legacy ZooKeeper VMs
+      ansible.builtin.command: "virsh undefine {{ item.name }}"
+      loop: "{{ legacy_vms }}"
+      when: item.name in legacy_defined.stdout_lines
+      changed_when: true
+
+    - name: Remove legacy ZooKeeper disk directories
+      ansible.builtin.file:
+        path: "{{ lab_dir }}/{{ item.name }}"
+        state: absent
+      loop: "{{ legacy_vms }}"

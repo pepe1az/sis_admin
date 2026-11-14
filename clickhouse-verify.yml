@@ -1,0 +1,355 @@
+---
+# =============================================================================
+#  Проверка кластера ClickHouse + Keeper на стенде sis_admin.
+#  Запуск:
+#    ansible-playbook clickhouse-verify.yml -i inventory/guests.generated.yml \
+#      -e @.local/clickhouse.yml
+#  Плейбук падает при любой ошибке.
+# =============================================================================
+
+- name: Verify each ClickHouse node and Keeper member
+  hosts: clickhouse
+  become: true
+  gather_facts: false
+
+  vars:
+    _instances: >-
+      {{ clickhouse_instances
+         | selectattr('host', 'equalto', inventory_hostname) | list }}
+    _keeper_host: "{{ inventory_hostname in clickhouse_keeper_hosts }}"
+
+  tasks:
+    # ------------------------------------------------------------------ Keeper
+    - name: "Keeper: команда ruok"
+      ansible.builtin.command:
+        argv: [nc, -w, "3", 127.0.0.1, "{{ clickhouse_keeper_client_port }}"]
+        stdin: "ruok\n"
+      register: _ruok
+      changed_when: false
+      when: _keeper_host
+
+    - name: "Keeper: ruok возвращает imok"
+      ansible.builtin.assert:
+        that:
+          - _ruok.stdout | trim == 'imok'
+        fail_msg: "ruok вернул: {{ _ruok.stdout | default('') }}"
+      when: _keeper_host
+
+    - name: "Keeper: команда mntr"
+      ansible.builtin.command:
+        argv: [nc, -w, "3", 127.0.0.1, "{{ clickhouse_keeper_client_port }}"]
+        stdin: "mntr\n"
+      register: _mntr
+      changed_when: false
+      when: _keeper_host
+
+    - name: "Keeper: mntr содержит состояние узла"
+      ansible.builtin.assert:
+        that:
+          - _mntr.stdout is search('zk_server_state\s+(leader|follower)')
+        fail_msg: "mntr вернул: {{ _mntr.stdout | default('') }}"
+      when: _keeper_host
+
+    - name: "Keeper: команда srvr"
+      ansible.builtin.command:
+        argv: [nc, -w, "3", 127.0.0.1, "{{ clickhouse_keeper_client_port }}"]
+        stdin: "srvr\n"
+      register: _srvr
+      changed_when: false
+      when: _keeper_host
+
+    - name: "Keeper: srvr содержит Mode"
+      ansible.builtin.assert:
+        that:
+          - _srvr.stdout is search('Mode:\s+(leader|follower)')
+        fail_msg: "srvr вернул: {{ _srvr.stdout | default('') }}"
+      when: _keeper_host
+
+    - name: "Keeper: запрещённая команда conf не выполняется"
+      ansible.builtin.command:
+        argv: [nc, -w, "3", 127.0.0.1, "{{ clickhouse_keeper_client_port }}"]
+        stdin: "conf\n"
+      register: _conf
+      changed_when: false
+      when: _keeper_host
+
+    - name: "Keeper: conf отклонена allow-list'ом"
+      ansible.builtin.assert:
+        that:
+          - _conf.stdout is not search('clientPort')
+          - _conf.stdout is not search('server_id')
+        fail_msg: >-
+          Похоже, four-letter word conf разрешена. Ответ: {{ _conf.stdout | default('') }}
+      when: _keeper_host
+
+    # -------------------------------------------------------------- ClickHouse
+    - name: "ClickHouse: все инстансы видят узлы кластера"
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - "--host=127.0.0.1"
+          - "--port={{ clickhouse_port_profiles[item.profile].tcp }}"
+          - "--user={{ clickhouse_user }}"
+          - "--password={{ clickhouse_password }}"
+          - >-
+            --query=SELECT count() FROM system.clusters
+            WHERE cluster = '{{ clickhouse_cluster_name }}'
+      loop: "{{ _instances }}"
+      register: _cluster_count
+      changed_when: false
+
+    - name: "ClickHouse: проверка количества узлов"
+      ansible.builtin.assert:
+        that:
+          - item.stdout | trim == (clickhouse_instances | length | string)
+        fail_msg: >-
+          {{ item.item.name }}: system.clusters вернул {{ item.stdout | trim }},
+          ожидалось {{ clickhouse_instances | length }}
+      loop: "{{ _cluster_count.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: "ClickHouse: макросы шарда и реплики"
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - "--host=127.0.0.1"
+          - "--port={{ clickhouse_port_profiles[item.profile].tcp }}"
+          - "--user={{ clickhouse_user }}"
+          - "--password={{ clickhouse_password }}"
+          - "--query=SELECT getMacro('shard'), getMacro('replica')"
+      loop: "{{ _instances }}"
+      register: _macros
+      changed_when: false
+
+    - name: "ClickHouse: макросы соответствуют топологии"
+      ansible.builtin.assert:
+        that:
+          - item.stdout | trim == (item.item.shard | string) ~ '\t' ~ item.item.replica
+        fail_msg: >-
+          {{ item.item.name }}: получено "{{ item.stdout | trim }}",
+          ожидалось "{{ item.item.shard }}\t{{ item.item.replica }}"
+      loop: "{{ _macros.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: "ClickHouse: состояние реплик ReplicatedMergeTree"
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - "--host=127.0.0.1"
+          - "--port={{ clickhouse_port_profiles[item.profile].tcp }}"
+          - "--user={{ clickhouse_user }}"
+          - "--password={{ clickhouse_password }}"
+          - >-
+            --query=SELECT total_replicas, active_replicas FROM system.replicas
+            WHERE database = '{{ clickhouse_database }}'
+            AND table = '{{ clickhouse_events_local_table }}'
+      loop: "{{ _instances }}"
+      register: _replicas
+      changed_when: false
+
+    - name: "ClickHouse: у каждой таблицы 2 активные реплики"
+      ansible.builtin.assert:
+        that:
+          - item.stdout | trim == '2\t2'
+        fail_msg: >-
+          {{ item.item.name }}: total/active replicas = "{{ item.stdout | trim }}"
+      loop: "{{ _replicas.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: "ClickHouse: движки таблиц"
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - "--host=127.0.0.1"
+          - "--port={{ clickhouse_port_profiles[item.profile].tcp }}"
+          - "--user={{ clickhouse_user }}"
+          - "--password={{ clickhouse_password }}"
+          - >-
+            --query=SELECT name, engine FROM system.tables
+            WHERE database = '{{ clickhouse_database }}'
+            AND name IN ('{{ clickhouse_events_local_table }}',
+            '{{ clickhouse_events_distributed_table }}')
+            ORDER BY name FORMAT TSV
+      loop: "{{ _instances }}"
+      register: _engines
+      changed_when: false
+
+    - name: "ClickHouse: ReplicatedMergeTree и Distributed на месте"
+      ansible.builtin.assert:
+        that:
+          - item.stdout is search(clickhouse_events_local_table ~ '\tReplicatedMergeTree')
+          - item.stdout is search(clickhouse_events_distributed_table ~ '\tDistributed')
+        fail_msg: "{{ item.stdout }}"
+      loop: "{{ _engines.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    # --------------------------------------------------------------- Метрики
+    - name: "Метрики ClickHouse отдают Prometheus-формат"
+      ansible.builtin.command:
+        argv:
+          - curl
+          - -fsS
+          - "--max-time"
+          - "5"
+          - "http://127.0.0.1:{{ clickhouse_port_profiles[item.profile].prometheus }}/metrics"
+      loop: "{{ _instances }}"
+      register: _ch_metrics
+      changed_when: false
+      no_log: true
+
+    - name: "Метрики ClickHouse содержат ClickHouseMetrics"
+      ansible.builtin.assert:
+        that:
+          - item.stdout is search('ClickHouseMetrics_')
+        fail_msg: "{{ item.item.name }}: метрики не найдены"
+      loop: "{{ _ch_metrics.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: "Метрики Keeper отдают Prometheus-формат"
+      ansible.builtin.command:
+        argv:
+          - curl
+          - -fsS
+          - "--max-time"
+          - "5"
+          - "http://127.0.0.1:{{ clickhouse_keeper_prometheus_port }}/metrics"
+      register: _keeper_metrics
+      changed_when: false
+      no_log: true
+      when: _keeper_host
+
+    - name: "Метрики Keeper содержат ClickHouse-метрики"
+      ansible.builtin.assert:
+        that:
+          - _keeper_metrics.stdout is search('ClickHouse')
+        fail_msg: "метрики Keeper не найдены"
+      when: _keeper_host
+
+- name: Verify cluster-wide replication and constant load
+  hosts: clickhouse[0]
+  become: true
+  gather_facts: false
+
+  vars:
+    _instances: >-
+      {{ clickhouse_instances
+         | selectattr('host', 'equalto', inventory_hostname) | list }}
+
+  tasks:
+    - name: "Нагрузка: сгенерировать уникальный маркер проверки"
+      ansible.builtin.set_fact:
+        _marker: "verify-{{ 100000000 | random }}"
+
+    - name: "Keeper: собрать mntr со всех трёх узлов"
+      ansible.builtin.command:
+        argv:
+          - nc
+          - -w
+          - "3"
+          - "{{ hostvars[item.host].clickhouse_node_ip }}"
+          - "{{ clickhouse_keeper_client_port }}"
+        stdin: "mntr\n"
+      loop: "{{ clickhouse_keeper_nodes }}"
+      register: _keeper_all
+      changed_when: false
+
+    - name: "Keeper: ровно один лидер, все узлы ответили"
+      ansible.builtin.assert:
+        that:
+          - _keeper_all.results | selectattr('stdout', 'search', 'zk_server_state\s+leader') | list | length == 1
+          - _keeper_all.results | rejectattr('stdout', 'search', 'zk_server_state') | list | length == 0
+        fail_msg: >-
+          Состояния Keeper: {{
+          _keeper_all.results | map(attribute='stdout')
+          | map('regex_search', 'zk_server_state\\s+(\\w+)') | list }}
+
+    - name: "ClickHouse: вставка 500 строк в Distributed-таблицу"
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - "--host=127.0.0.1"
+          - "--port={{ clickhouse_port_profiles[_instances[0].profile].tcp }}"
+          - "--user={{ clickhouse_user }}"
+          - "--password={{ clickhouse_password }}"
+          - >-
+            --query=INSERT INTO {{ clickhouse_database }}.{{ clickhouse_events_distributed_table }}
+            (event_time, user_id, event_type, region, amount, payload)
+            SELECT now(), number, 'verify', 'test', 1.0, '{{ _marker }}'
+            FROM numbers(500)
+      changed_when: true
+
+    - name: "ClickHouse: вставленные строки видны через Distributed"
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - "--host=127.0.0.1"
+          - "--port={{ clickhouse_port_profiles[_instances[0].profile].tcp }}"
+          - "--user={{ clickhouse_user }}"
+          - "--password={{ clickhouse_password }}"
+          - >-
+            --query=SELECT count() FROM {{ clickhouse_database }}.{{ clickhouse_events_distributed_table }}
+            WHERE payload = '{{ _marker }}'
+      register: _insert_count
+      until: _insert_count.stdout | trim == '500'
+      retries: 20
+      delay: 2
+      changed_when: false
+
+    - name: "ClickHouse: маркер реплицирован на обе реплики каждого шарда"
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - "--host=127.0.0.1"
+          - "--port={{ clickhouse_port_profiles[_instances[0].profile].tcp }}"
+          - "--user={{ clickhouse_user }}"
+          - "--password={{ clickhouse_password }}"
+          - >-
+            --query=SELECT count() FROM remote('{% for i in clickhouse_instances %}{{
+            hostvars[i.host].clickhouse_node_ip }}:{{ clickhouse_port_profiles[i.profile].tcp
+            }}{% if not loop.last %},{% endif %}{% endfor %}',
+            '{{ clickhouse_database }}.{{ clickhouse_events_local_table }}',
+            '{{ clickhouse_user }}', '{{ clickhouse_password }}')
+            WHERE payload = '{{ _marker }}'
+      register: _replica_copies
+      until: _replica_copies.stdout | trim == '1000'
+      retries: 30
+      delay: 2
+      changed_when: false
+
+    - name: "ClickHouse: 500 строк x 2 реплики = 1000 копий"
+      ansible.builtin.assert:
+        that:
+          - _replica_copies.stdout | trim == '1000'
+        fail_msg: >-
+          На репликах найдено {{ _replica_copies.stdout | trim }} копий маркера,
+          ожидалось 1000 (500 строк, каждая на двух репликах шарда)
+
+    - name: "Нагрузка: аналитические запросы выполняются"
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - "--host=127.0.0.1"
+          - "--port={{ clickhouse_port_profiles[_instances[0].profile].tcp }}"
+          - "--user={{ clickhouse_user }}"
+          - "--password={{ clickhouse_password }}"
+          - >-
+            --query=SELECT count() FROM system.query_log
+            WHERE type = 'QueryFinish'
+            AND event_time > now() - INTERVAL 5 MINUTE
+            AND query LIKE '%{{ clickhouse_database }}.{{ clickhouse_events_distributed_table }}%'
+            AND query LIKE '%GROUP BY%'
+      register: _analytics
+      changed_when: false
+
+    - name: "Нагрузка: генератор действительно выполняет аналитику"
+      ansible.builtin.assert:
+        that:
+          - _analytics.stdout | trim | int > 0
+        fail_msg: >-
+          В system.query_log нет аналитических запросов генератора.
+          Проверьте systemctl status clickhouse-load на {{ clickhouse_load_hosts | join(', ') }}.

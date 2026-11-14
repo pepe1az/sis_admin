@@ -35,3 +35,18 @@ Unit-тесты проверяют все пары ДЦ, частичную ош
 отдельную авторизацию в `.local/gh`, исключённую из Git. Глобальная конфигурация
 Git и существующие SSH-ключи не менялись. Перед публикацией выполнена проверка
 отслеживаемых файлов на секреты.
+
+## Замена ZooKeeper на ClickHouse Keeper, 2026-11-14
+
+По прямому решению пользователя три ZooKeeper-ВМ `g2-zk1..3` удалены из
+актуального IP-плана: это были заглушки, созданные до выбора реального
+координатора. ClickHouse Keeper развёрнут на `g2-ch1r1`, `g2-ch2r1`,
+`g2-ch3r1`; кластер 3 × 2 и схема данных не менялись.
+
+Изменены `group_vars/all.yml`, `inventory/guests.generated.yml`, `README.md`,
+IP-план, runbooks, сценарий 13, роль `guest` (убран ZK-firewall),
+шаблон inventory (убрана группа `zookeeper`), `verify.yml` (адрес
+cross-DC traceroute) и chaos-сценарий `isolate-zk` → `isolate-keeper`. Исторические отчёты в `reports/` не
+переписывались; в `docs/validation.md` добавлено пояснение, что старые числа
+относятся к топологии из 11 ВМ. Для действующего стенда добавлен
+`cleanup-zookeeper.yml`, а `destroy.yml`/`rebuild.yml` учитывают legacy-имена.

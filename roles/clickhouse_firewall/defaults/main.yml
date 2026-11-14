@@ -1,0 +1,26 @@
+---
+# Ограничения для узлов ClickHouse. Политика input — accept, как в
+# базовой роли guest: запрещаются только порты кластера
+# для источников вне allow-list. Это сохраняет ping/SSH/ProxyJump стенда.
+clickhouse_firewall_enabled: true
+
+# IP серверов мониторинга (Prometheus / сборщик mntr). Пусто — только localhost.
+clickhouse_firewall_monitoring_ips: >-
+  {{ clickhouse_monitoring_ips | default(lab_monitoring_sources | default([])) }}
+
+# Порты, доступные узлам кластера.
+clickhouse_firewall_ports:
+  - 9000   # native TCP
+  - 8123   # HTTP
+  - 9009   # interserver replication
+  - 9004   # MySQL protocol
+  - 9363   # ClickHouse Prometheus
+  - 9181   # Keeper client
+  - 9234   # Keeper Raft
+  - 9365   # Keeper Prometheus
+
+# Порты, доступные серверам мониторинга.
+clickhouse_firewall_metrics_ports:
+  - 9181
+  - 9363
+  - 9365

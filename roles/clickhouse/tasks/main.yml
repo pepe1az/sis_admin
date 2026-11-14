@@ -1,0 +1,112 @@
+---
+- name: Собрать инстансы текущего хоста
+  ansible.builtin.set_fact:
+    clickhouse_role_instances: >-
+      {{ clickhouse_instances
+         | selectattr('host', 'equalto', inventory_hostname) | list }}
+
+- name: Проверить, что топология содержит инстанс для хоста
+  ansible.builtin.assert:
+    that:
+      - clickhouse_role_instances | length >= 1
+      - >-
+        clickhouse_role_instances | map(attribute='name') | unique | list
+        | length == clickhouse_role_instances | length
+    fail_msg: >-
+      Для хоста {{ inventory_hostname }} в clickhouse_instances не найден инстанс
+      или имена повторяются. Проверьте group_vars/clickhouse.yml.
+
+- name: Отключить штатный одноинстансный сервис ClickHouse
+  ansible.builtin.systemd_service:
+    name: clickhouse-server.service
+    state: stopped
+    enabled: false
+    masked: true
+
+- name: Создать каталоги конфигураций инстансов
+  ansible.builtin.file:
+    path: "{{ clickhouse_config_root }}/{{ item.name }}"
+    state: directory
+    owner: clickhouse
+    group: clickhouse
+    mode: "0750"
+  loop: "{{ clickhouse_role_instances }}"
+
+- name: Создать каталоги данных инстансов
+  ansible.builtin.file:
+    path: "{{ clickhouse_data_root }}/{{ item.name }}"
+    state: directory
+    owner: clickhouse
+    group: clickhouse
+    mode: "0750"
+  loop: "{{ clickhouse_role_instances }}"
+
+- name: Создать каталоги логов инстансов
+  ansible.builtin.file:
+    path: "{{ clickhouse_log_root }}/{{ item.name }}"
+    state: directory
+    owner: clickhouse
+    group: clickhouse
+    mode: "0750"
+  loop: "{{ clickhouse_role_instances }}"
+
+- name: Сформировать config.xml инстансов
+  ansible.builtin.template:
+    src: config.xml.j2
+    dest: "{{ clickhouse_config_root }}/{{ item.name }}/config.xml"
+    owner: clickhouse
+    group: clickhouse
+    mode: "0640"
+  loop: "{{ clickhouse_role_instances }}"
+  notify: Restart clickhouse instances
+
+- name: Сформировать users.xml инстансов
+  ansible.builtin.template:
+    src: users.xml.j2
+    dest: "{{ clickhouse_config_root }}/{{ item.name }}/users.xml"
+    owner: clickhouse
+    group: clickhouse
+    mode: "0640"
+  loop: "{{ clickhouse_role_instances }}"
+  notify: Restart clickhouse instances
+
+- name: Установить systemd-шаблон для инстансов
+  ansible.builtin.copy:
+    src: clickhouse-server@.service
+    dest: /etc/systemd/system/clickhouse-server@.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart clickhouse instances
+
+- name: Включить и запустить инстансы ClickHouse
+  ansible.builtin.systemd_service:
+    name: "clickhouse-server@{{ item.name }}.service"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop: "{{ clickhouse_role_instances }}"
+
+- name: Дождаться открытия TCP-портов инстансов
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ clickhouse_port_profiles[item.profile].tcp }}"
+    timeout: 120
+    delay: 1
+  loop: "{{ clickhouse_role_instances }}"
+
+- name: Дождаться готовности инстансов принимать запросы
+  ansible.builtin.command:
+    argv:
+      - clickhouse-client
+      - "--host=127.0.0.1"
+      - "--port={{ clickhouse_port_profiles[item.profile].tcp }}"
+      - "--user={{ clickhouse_user }}"
+      - "--password={{ clickhouse_password }}"
+      - "--query=SELECT 1"
+  loop: "{{ clickhouse_role_instances }}"
+  register: clickhouse_role_ready
+  until: clickhouse_role_ready.rc == 0
+  retries: 30
+  delay: 2
+  changed_when: false

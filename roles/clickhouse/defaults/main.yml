@@ -1,0 +1,5 @@
+---
+# Лимиты на один инстанс ClickHouse (переопределяются в инвентаре).
+clickhouse_max_server_memory: "8G"
+clickhouse_max_query_memory: "4G"
+clickhouse_max_threads: 8

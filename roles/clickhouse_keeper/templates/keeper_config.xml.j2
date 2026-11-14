@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!-- Managed by Ansible. Не редактировать вручную. -->
+<clickhouse>
+    <logger>
+        <level>information</level>
+        <log>{{ clickhouse_keeper_log_root }}/clickhouse-keeper.log</log>
+        <errorlog>{{ clickhouse_keeper_log_root }}/clickhouse-keeper.err.log</errorlog>
+        <size>200M</size>
+        <count>5</count>
+    </logger>
+
+    <listen_host>0.0.0.0</listen_host>
+    <max_connections>4096</max_connections>
+
+    <keeper_server>
+        <tcp_port>{{ clickhouse_keeper_client_port }}</tcp_port>
+        <!-- Уникален для каждого узла ансамбля -->
+        <server_id>{{ clickhouse_keeper_node.id }}</server_id>
+
+        <log_storage_path>{{ clickhouse_keeper_data_root }}/log</log_storage_path>
+        <snapshot_storage_path>{{ clickhouse_keeper_data_root }}/snapshots</snapshot_storage_path>
+
+        <coordination_settings>
+            <operation_timeout_ms>10000</operation_timeout_ms>
+            <session_timeout_ms>30000</session_timeout_ms>
+            <raft_logs_level>information</raft_logs_level>
+            <auto_forwarding>true</auto_forwarding>
+            <snapshot_distance>100000</snapshot_distance>
+            <reserved_log_items>100000</reserved_log_items>
+        </coordination_settings>
+
+        <raft_configuration>
+        {% for node in clickhouse_keeper_nodes %}
+            <server>
+                <id>{{ node.id }}</id>
+                <hostname>{{ hostvars[node.host].clickhouse_node_ip }}</hostname>
+                <port>{{ clickhouse_keeper_raft_port }}</port>
+            </server>
+        {% endfor %}
+        </raft_configuration>
+
+        <!-- Доступны только команды мониторинга. Порт 9181 всё равно закрыт
+             nftables для всех, кроме узлов ClickHouse и серверов мониторинга. -->
+        <four_letter_word_allow_list>{{ clickhouse_keeper_four_letter_words }}</four_letter_word_allow_list>
+    </keeper_server>
+
+    <prometheus>
+        <endpoint>/metrics</endpoint>
+        <port>{{ clickhouse_keeper_prometheus_port }}</port>
+        <metrics>true</metrics>
+        <events>true</events>
+        <asynchronous_metrics>true</asynchronous_metrics>
+    </prometheus>
+</clickhouse>

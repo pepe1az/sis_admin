@@ -1,0 +1,40 @@
+-- Managed by Ansible. Идемпотентная схема БД для кластера.
+-- Выполняется на одном узле с ON CLUSTER: DDL разъезжается по всем узлам
+-- через очередь /clickhouse/task_queue/ddl в Keeper.
+
+CREATE DATABASE IF NOT EXISTS {{ clickhouse_database }}
+ON CLUSTER {{ clickhouse_cluster_name }};
+
+-- Локальная реплицируемая таблица: по одной на каждый шард/реплику.
+-- Путь в Keeper содержит макросы {shard} и {replica}, поэтому у реплик
+-- одного шарда путь одинаковый, а имя реплики — разное.
+CREATE TABLE IF NOT EXISTS {{ clickhouse_database }}.{{ clickhouse_events_local_table }}
+ON CLUSTER {{ clickhouse_cluster_name }}
+(
+    event_time  DateTime,
+    event_date  Date DEFAULT toDate(event_time),
+    user_id     UInt64,
+    event_type  LowCardinality(String),
+    region      LowCardinality(String),
+    amount      Float64,
+    payload     String
+)
+ENGINE = ReplicatedMergeTree(
+    '/clickhouse/tables/{shard}/{{ clickhouse_database }}/{{ clickhouse_events_local_table }}',
+    '{replica}'
+)
+PARTITION BY toYYYYMM(event_date)
+ORDER BY (event_date, event_type, user_id)
+TTL event_date + INTERVAL {{ clickhouse_events_ttl_days }} DAY;
+
+-- Распределённая таблица: точка входа для вставок и аналитики.
+-- internal_replication=true — запись идёт в одну реплику шарда.
+CREATE TABLE IF NOT EXISTS {{ clickhouse_database }}.{{ clickhouse_events_distributed_table }}
+ON CLUSTER {{ clickhouse_cluster_name }}
+AS {{ clickhouse_database }}.{{ clickhouse_events_local_table }}
+ENGINE = Distributed(
+    {{ clickhouse_cluster_name }},
+    {{ clickhouse_database }},
+    {{ clickhouse_events_local_table }},
+    cityHash64(user_id)
+);

@@ -1,0 +1,95 @@
+---
+# =============================================================================
+#  ClickHouse 3 шарда x 2 реплики + ClickHouse Keeper на стенде sis_admin.
+#
+#  Использует уже созданные ВМ из inventory/guests.generated.yml:
+#    g2-ch1r1 ... g2-ch3r2 — по одному инстансу ClickHouse на ВМ;
+#    g2-ch1r1, g2-ch2r1, g2-ch3r1 — дополнительно узел Keeper (по одному на ДЦ).
+#
+#  Пароль пользователя default передаётся вне Git:
+#    ./scripts/clickhouse-secret.py
+#    ansible-playbook clickhouse.yml -i inventory/guests.generated.yml \
+#      -e @.local/clickhouse.yml
+#
+#  Существующие site.yml, verify.yml и роли hypervisor/vm/router/guest
+#  не изменяются.
+# =============================================================================
+
+- name: Deploy ClickHouse and ClickHouse Keeper
+  hosts: clickhouse
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Require ClickHouse default password outside Git
+      ansible.builtin.assert:
+        that:
+          - clickhouse_password is defined
+          - (clickhouse_password | default('')) | length >= 8
+          - (clickhouse_password | default('')) not in ['CHANGE_ME', 'changeme']
+        fail_msg: >-
+          Задайте clickhouse_password: ./scripts/clickhouse-secret.py, затем
+          запустите с -e @.local/clickhouse.yml (в проде — ansible-vault).
+        quiet: true
+
+    - name: Validate cluster topology size
+      ansible.builtin.assert:
+        that:
+          - clickhouse_instances | length == 6
+          - clickhouse_instances | map(attribute='host') | unique | list | length == 6
+          - clickhouse_instances | map(attribute='shard') | unique | list | length == 3
+          - clickhouse_keeper_nodes | length == 3
+          - clickhouse_keeper_hosts | difference(groups['clickhouse']) | length == 0
+          - groups['clickhouse'] | difference(clickhouse_instances | map(attribute='host') | list) | length == 0
+        fail_msg: >-
+          group_vars/clickhouse.yml не соответствует inventory/guests.generated.yml:
+          ожидаются 6 ВМ, 3 шарда по 2 реплики и 3 Keeper.
+        quiet: true
+
+    - name: Validate shard/replica against inventory
+      ansible.builtin.assert:
+        that:
+          - hostvars[item.host].shard | int == item.shard
+          - hostvars[item.host].dc == item.replica
+        fail_msg: >-
+          {{ item.host }}: в inventory shard={{ hostvars[item.host].shard }},
+          dc={{ hostvars[item.host].dc }}; в clickhouse_instances
+          shard={{ item.shard }}, replica={{ item.replica }}.
+        quiet: true
+      loop: "{{ clickhouse_instances }}"
+      loop_control:
+        label: "{{ item.host }}"
+
+    - name: Validate two replicas of each shard live in different DCs
+      ansible.builtin.assert:
+        that:
+          - clickhouse_instances | selectattr('shard', 'equalto', item) | list | length == 2
+          - >-
+            clickhouse_instances | selectattr('shard', 'equalto', item)
+            | map(attribute='replica') | unique | list | length == 2
+        fail_msg: "Шард {{ item }} должен иметь две реплики в разных ДЦ"
+      loop: "{{ clickhouse_instances | map(attribute='shard') | unique | list }}"
+      loop_control:
+        label: "shard {{ item }}"
+
+  roles:
+    - clickhouse_common
+    - clickhouse_firewall
+    - role: clickhouse_keeper
+      when: inventory_hostname in clickhouse_keeper_hosts
+    - clickhouse
+
+- name: Apply ClickHouse schema ON CLUSTER from the first node
+  hosts: clickhouse[0]
+  become: true
+  gather_facts: false
+  roles:
+    - clickhouse_schema
+
+- name: Start constant load on the selected node
+  hosts: clickhouse
+  become: true
+  gather_facts: false
+  roles:
+    - role: clickhouse_load
+      when: inventory_hostname in clickhouse_load_hosts

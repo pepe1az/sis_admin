@@ -46,7 +46,7 @@ def undo(plan):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('scenario', choices=['wan', 'isolate-zk', 'asymmetric', 'mtu', 'switch', 'dc', 'two-dc', 'rollback'])
+    parser.add_argument('scenario', choices=['wan', 'isolate-keeper', 'asymmetric', 'mtu', 'switch', 'dc', 'two-dc', 'rollback'])
     parser.add_argument('--dc', choices=['dc1', 'dc2', 'dc3'], default='dc1')
     parser.add_argument('--peer', choices=['dc1', 'dc2', 'dc3'], default='dc2')
     parser.add_argument('--seconds', type=int, default=120)
@@ -101,7 +101,7 @@ def main():
                 if not apply:
                     parser.error('No running VMs in the selected DCs')
         else:
-            if args.scenario != 'isolate-zk' and run(['hostname', '-s']) != 'g2-router':
+            if args.scenario != 'isolate-keeper' and run(['hostname', '-s']) != 'g2-router':
                 parser.error('Network scenarios must run on g2-router')
             iface = args.dc
             if args.scenario == 'wan':
@@ -123,18 +123,21 @@ def main():
                 if 'table inet g2_chaos' in run(['nft', 'list', 'tables']):
                     parser.error('Existing g2_chaos table; inspect it before retrying')
                 rollback.append(['nft'])
-                if args.scenario == 'isolate-zk':
+                if args.scenario == 'isolate-keeper':
                     ipaddress.IPv4Address(args.node)
                     node = next((n for n in nodes if n['ip'] == args.node and n['role'] == 'clickhouse'), None)
                     if node is None:
                         parser.error('--node must be a ClickHouse IP from topology')
                     if run(['hostname', '-s']) != node['name']:
-                        parser.error('Run isolate-zk on the ClickHouse VM specified by --node')
-                    zk_ips = ', '.join(n['ip'] for n in nodes if n['role'] == 'zookeeper')
+                        parser.error('Run isolate-keeper on the ClickHouse VM specified by --node')
+                    keeper_nodes = [n for n in nodes if n.get('keeper')]
+                    if not keeper_nodes:
+                        parser.error('No ClickHouse Keeper nodes marked in topology')
+                    keeper_ips = ', '.join(n['ip'] for n in keeper_nodes)
                     rules = ('chain output { type filter hook output priority -10; policy accept; '
-                             'ip daddr { ' + zk_ips + ' } tcp dport 2181 drop; } '
+                             'ip daddr { ' + keeper_ips + ' } tcp dport { 9181, 9234 } drop; } '
                              'chain input { type filter hook input priority -10; policy accept; '
-                             'ip saddr { ' + zk_ips + ' } tcp sport 2181 drop; }')
+                             'ip saddr { ' + keeper_ips + ' } tcp sport { 9181, 9234 } drop; }')
                 elif args.scenario == 'asymmetric':
                     if args.dc == args.peer:
                         parser.error('--dc and --peer must differ')

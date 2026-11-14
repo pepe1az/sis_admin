@@ -1,0 +1,88 @@
+---
+# =============================================================================
+#  ClickHouse 3 шарда x 2 реплики + ClickHouse Keeper
+#
+#  Интеграция в стенд sis_admin: шесть уже созданных ВМ clickhouse, по одному
+#  инстансу ClickHouse на ВМ. Keeper поставлен на три из них — по одному в
+#  каждом ДЦ. Отдельные ZooKeeper-ВМ удалены: g2-zk1..3 были заглушками.
+#
+#  Шарды: 1 = dc1 + dc2, 2 = dc2 + dc3, 3 = dc3 + dc1.
+#  Имена хостов и поля shard/replica/dc должны совпадать с
+#  inventory/guests.generated.yml; это проверяет clickhouse.yml.
+# =============================================================================
+
+# --- Версия и apt-репозиторий ------------------------------------------------
+clickhouse_version: "25.8.33.6"
+clickhouse_apt_repo: "https://packages.clickhouse.com/deb"
+clickhouse_apt_component: "stable"
+clickhouse_apt_keyring: "/etc/apt/keyrings/clickhouse.asc"
+clickhouse_hold_packages: true
+
+# --- Имена в кластере --------------------------------------------------------
+clickhouse_cluster_name: "ch_cluster"
+clickhouse_database: "bench"
+clickhouse_events_local_table: "events_local"
+clickhouse_events_distributed_table: "events"
+clickhouse_events_ttl_days: 30
+
+# --- Keeper ------------------------------------------------------------------
+clickhouse_keeper_client_port: 9181
+clickhouse_keeper_raft_port: 9234
+clickhouse_keeper_prometheus_port: 9365
+clickhouse_keeper_four_letter_words: "mntr,ruok,srvr"
+
+# Один Keeper на ДЦ. Все три хоста входят в группу clickhouse.
+clickhouse_keeper_nodes:
+  - { host: g2-ch1r1, id: 1 }
+  - { host: g2-ch2r1, id: 2 }
+  - { host: g2-ch3r1, id: 3 }
+clickhouse_keeper_hosts: "{{ clickhouse_keeper_nodes | map(attribute='host') | list }}"
+
+# --- Порты инстанса ClickHouse ----------------------------------------------
+# Один инстанс на ВМ использует стандартные порты. Профиль оставлен словарём,
+# чтобы роли не зависели от конкретной схемы размещения.
+clickhouse_port_profiles:
+  a:
+    tcp: 9000
+    http: 8123
+    interserver: 9009
+    mysql: 9004
+    prometheus: 9363
+
+# --- Топология: единственный источник правды --------------------------------
+# name  — имя инстанса на ВМ (systemd: clickhouse-server@<name>)
+# shard — номер шарда, replica — имя реплики (макрос {replica}, совпадает с ДЦ)
+clickhouse_instances:
+  - { name: ch1, host: g2-ch1r1, shard: 1, replica: dc1, profile: a }
+  - { name: ch1, host: g2-ch1r2, shard: 1, replica: dc2, profile: a }
+  - { name: ch1, host: g2-ch2r1, shard: 2, replica: dc2, profile: a }
+  - { name: ch1, host: g2-ch2r2, shard: 2, replica: dc3, profile: a }
+  - { name: ch1, host: g2-ch3r1, shard: 3, replica: dc3, profile: a }
+  - { name: ch1, host: g2-ch3r2, shard: 3, replica: dc1, profile: a }
+
+# IP, по которому узлы видят друг друга (в стенде совпадает с ansible_host).
+clickhouse_node_ip: "{{ ansible_host | default(inventory_hostname) }}"
+
+# --- Пользователь по умолчанию ----------------------------------------------
+# Пароль не хранится в Git: передайте -e @.local/clickhouse.yml
+# (файл создаёт scripts/clickhouse-secret.py) или ansible-vault.
+clickhouse_user: "default"
+
+# --- Ресурсы на одну ВМ (в стенде 1 ГиБ RAM) ---------------------------------
+clickhouse_max_server_memory: "600M"
+clickhouse_max_query_memory: "256M"
+clickhouse_max_threads: 2
+
+# --- Постоянная нагрузка -----------------------------------------------------
+# Один генератор на весь кластер, чтобы не перегружать шесть ВМ по 1 ГиБ.
+clickhouse_load_enabled: true
+clickhouse_load_hosts:
+  - g2-ch1r1
+
+# --- Пути --------------------------------------------------------------------
+clickhouse_config_root: "/etc/clickhouse-server/instances"
+clickhouse_data_root: "/var/lib/clickhouse/instances"
+clickhouse_log_root: "/var/log/clickhouse-server"
+clickhouse_keeper_config: "/etc/clickhouse-keeper/keeper_config.xml"
+clickhouse_keeper_data_root: "/var/lib/clickhouse-keeper"
+clickhouse_keeper_log_root: "/var/log/clickhouse-keeper"

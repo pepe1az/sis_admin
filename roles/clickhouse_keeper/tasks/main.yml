@@ -1,0 +1,51 @@
+---
+# Роль применяется только к хостам из clickhouse_keeper_nodes (см. clickhouse.yml).
+- name: Проверить, что хост входит в ансамбль Keeper
+  ansible.builtin.assert:
+    that:
+      - inventory_hostname in clickhouse_keeper_hosts
+    fail_msg: >-
+      {{ inventory_hostname }} отсутствует в clickhouse_keeper_nodes.
+      Проверьте group_vars/clickhouse.yml.
+    quiet: true
+
+- name: Определить параметры Keeper для текущего хоста
+  ansible.builtin.set_fact:
+    clickhouse_keeper_node: >-
+      {{ clickhouse_keeper_nodes
+         | selectattr('host', 'equalto', inventory_hostname) | first }}
+
+- name: Создать каталоги Keeper
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: clickhouse
+    group: clickhouse
+    mode: "0750"
+  loop:
+    - "{{ clickhouse_keeper_data_root }}/log"
+    - "{{ clickhouse_keeper_data_root }}/snapshots"
+    - "{{ clickhouse_keeper_log_root }}"
+
+- name: Сформировать конфигурацию Keeper
+  ansible.builtin.template:
+    src: keeper_config.xml.j2
+    dest: "{{ clickhouse_keeper_config }}"
+    owner: clickhouse
+    group: clickhouse
+    mode: "0640"
+  notify: Restart clickhouse keeper
+
+- name: Включить и запустить Keeper
+  ansible.builtin.systemd_service:
+    name: clickhouse-keeper.service
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Дождаться открытия клиентского порта Keeper
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ clickhouse_keeper_client_port }}"
+    timeout: 60
+    delay: 1

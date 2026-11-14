@@ -1,0 +1,44 @@
+#!/usr/sbin/nft -f
+# Managed by Ansible. Не редактировать вручную.
+#
+# Политика input — accept (как в базовой роли guest): стенд не должен
+# потерять ping/SSH/ProxyJump. Ограничиваются только порты кластера.
+# Таблица изолирована, поэтому не затирает чужие правила nftables.
+
+{% set cluster_ips = [] %}
+{% for host in clickhouse_instances | map(attribute='host') | unique %}
+{%   set _ = cluster_ips.append(hostvars[host].clickhouse_node_ip) %}
+{% endfor %}
+
+add table inet g2_clickhouse
+flush table inet g2_clickhouse
+table inet g2_clickhouse {
+    set cluster_ips {
+        type ipv4_addr
+        elements = { {{ cluster_ips | unique | sort | join(', ') }} }
+    }
+{% if clickhouse_firewall_monitoring_ips | length > 0 %}
+    set monitoring_ips {
+        type ipv4_addr
+        elements = { {{ clickhouse_firewall_monitoring_ips | unique | sort | join(', ') }} }
+    }
+{% endif %}
+
+    chain input {
+        type filter hook input priority 0; policy accept;
+
+        iifname "lo" accept
+        ct state established,related accept
+        ip protocol icmp accept
+
+        # Узлы кластера: репликация, Distributed-запросы, Keeper, DDL.
+        ip saddr @cluster_ips tcp dport { {{ clickhouse_firewall_ports | join(', ') }} } accept
+{% if clickhouse_firewall_monitoring_ips | length > 0 %}
+        # Мониторинг: mntr и Prometheus-метрики.
+        ip saddr @monitoring_ips tcp dport { {{ clickhouse_firewall_metrics_ports | join(', ') }} } accept
+{% endif %}
+
+        # Всё остальное к портам кластера — запрещено.
+        tcp dport { {{ clickhouse_firewall_ports | join(', ') }} } drop
+    }
+}

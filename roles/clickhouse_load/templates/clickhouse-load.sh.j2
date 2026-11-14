@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# Managed by Ansible.
+# Постоянная смешанная нагрузка: INSERT в Distributed-таблицу + аналитические
+# SELECT'ы (GROUP BY / uniqExact / quantile) по всему кластеру.
+set -uo pipefail
+
+CH=(
+  /usr/bin/clickhouse-client
+  --host=127.0.0.1
+  --port={{ clickhouse_port_profiles[clickhouse_load_instance.profile].tcp }}
+  --user={{ clickhouse_user }}
+  --password="${CLICKHOUSE_PASSWORD}"
+)
+
+LOG="{{ clickhouse_load_log }}"
+BATCH={{ clickhouse_load_batch_rows }}
+INTERVAL={{ clickhouse_load_interval_seconds }}
+ANALYTICS_EVERY={{ clickhouse_load_analytics_every }}
+
+log() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" >>"${LOG}"; }
+
+trap 'log "shutdown"; exit 0' TERM INT
+
+log "start: batch=${BATCH} interval=${INTERVAL}s analytics_every=${ANALYTICS_EVERY}"
+
+i=0
+while true; do
+  if ! "${CH[@]}" --query "
+        INSERT INTO {{ clickhouse_database }}.{{ clickhouse_events_distributed_table }}
+            (event_time, user_id, event_type, region, amount, payload)
+        SELECT
+            now() - toIntervalSecond(rand() % 3600),
+            rand64() % 1000000,
+            arrayElement(['view','click','purchase','login','search'],
+                         toUInt8(1 + rand() % 5)),
+            arrayElement(['eu-west','eu-north','us-east','ap-south','us-west'],
+                         toUInt8(1 + rand() % 5)),
+            round(rand() / 1000000.0, 2),
+            repeat('x', 32)
+        FROM numbers(${BATCH})
+    " >>"${LOG}" 2>&1; then
+    log "insert failed (см. строку выше)"
+  fi
+
+  if (( i % ANALYTICS_EVERY == 0 )); then
+    {
+      printf -- '--- analytics %s ---\n' "$(date -u +%FT%TZ)"
+      "${CH[@]}" --query "
+            SELECT
+                event_type,
+                region,
+                count()                     AS events,
+                uniqExact(user_id)          AS users,
+                round(avg(amount), 2)       AS avg_amount,
+                round(quantile(0.95)(amount), 2) AS p95_amount
+            FROM {{ clickhouse_database }}.{{ clickhouse_events_distributed_table }}
+            WHERE event_time >= now() - INTERVAL 10 MINUTE
+            GROUP BY event_type, region
+            ORDER BY events DESC
+            LIMIT 10
+            FORMAT PrettyCompactMonoBlock
+        " 2>&1
+    } >>"${LOG}"
+  fi
+
+  i=$(( i + 1 ))
+  sleep "${INTERVAL}"
+done

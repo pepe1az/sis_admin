@@ -1,0 +1,29 @@
+---
+# Отдельная nftables-таблица вместо ufw: в проекте sis_admin уже используется
+# nftables, а ufw блокирует ICMP, который проверяет существующий verify.yml.
+- name: Межсетевой экран ClickHouse (nftables)
+  when: clickhouse_firewall_enabled | bool
+
+  block:
+    - name: Установить nftables
+      ansible.builtin.apt:
+        name: nftables
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Сформировать правила nftables
+      ansible.builtin.template:
+        src: nftables.conf.j2
+        dest: /etc/nftables.conf
+        owner: root
+        group: root
+        mode: "0644"
+        validate: /usr/sbin/nft -c -f %s
+      notify: Reload clickhouse nftables
+
+    - name: Включить nftables
+      ansible.builtin.systemd_service:
+        name: nftables.service
+        enabled: true
+        state: started

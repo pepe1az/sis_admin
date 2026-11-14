@@ -11,6 +11,7 @@
           - lab_prefix == 'g2-'
           - lab_dir == '/var/lib/libvirt/images/itmo-g2'
           - lab_vms | rejectattr('name', 'match', '^g2-') | list | length == 0
+          - lab_legacy_vms | default([]) | rejectattr('name', 'match', '^g2-zk[0-9]+$') | list | length == 0
         fail_msg: 'All lab disks will be lost. Pass -e confirm_destroy=itmo-g2 explicitly.'
     - name: Refuse destruction while a chaos experiment is active
       ansible.builtin.stat:
@@ -23,18 +24,18 @@
       ansible.builtin.command: virsh list --name
       register: active_vms
       changed_when: false
-    - name: Power off lab VMs
+    - name: Power off lab and legacy VMs
       ansible.builtin.command: "virsh destroy {{ item.name }}"
-      loop: "{{ lab_vms }}"
+      loop: "{{ lab_vms + (lab_legacy_vms | default([])) }}"
       when: item.name in active_vms.stdout_lines
       changed_when: true
     - name: Read defined VMs
       ansible.builtin.command: virsh list --all --name
       register: defined_vms
       changed_when: false
-    - name: Undefine lab VMs
+    - name: Undefine lab and legacy VMs
       ansible.builtin.command: "virsh undefine {{ item.name }}"
-      loop: "{{ lab_vms }}"
+      loop: "{{ lab_vms + (lab_legacy_vms | default([])) }}"
       when: item.name in defined_vms.stdout_lines
       changed_when: true
     - name: Stop persistent lab routes

@@ -1,0 +1,29 @@
+---
+clickhouse_common_timezone: "UTC"
+
+clickhouse_common_packages:
+  - ca-certificates
+  - curl
+  - gnupg
+  - python3-apt
+  - netcat-openbsd
+  - jq
+  - tzdata
+  - procps
+  - iproute2
+  - logrotate
+  - less
+  - vim-tiny
+
+# Параметры ядра, рекомендованные ClickHouse.
+clickhouse_common_sysctl:
+  - { name: "vm.max_map_count", value: "262144" }
+  - { name: "fs.file-max", value: "2097152" }
+  - { name: "net.core.somaxconn", value: "4096" }
+  - { name: "net.ipv4.tcp_keepalive_time", value: "300" }
+  - { name: "vm.swappiness", value: "1" }
+
+clickhouse_common_packages_to_hold:
+  - clickhouse-common-static
+  - clickhouse-server
+  - clickhouse-client

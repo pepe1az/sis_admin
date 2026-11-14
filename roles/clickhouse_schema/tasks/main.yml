@@ -1,0 +1,118 @@
+---
+- name: Выбрать локальный инстанс для выполнения DDL
+  ansible.builtin.set_fact:
+    clickhouse_schema_instance: >-
+      {{ clickhouse_instances
+         | selectattr('host', 'equalto', inventory_hostname) | first }}
+    clickhouse_schema_expected_tables: "{{ clickhouse_instances | length * 2 }}"
+
+- name: Дождаться, что все инстансы ClickHouse отвечают по TCP
+  ansible.builtin.wait_for:
+    host: "{{ hostvars[item.host].clickhouse_node_ip }}"
+    port: "{{ clickhouse_port_profiles[item.profile].tcp }}"
+    timeout: 180
+    delay: 1
+  loop: "{{ clickhouse_instances }}"
+
+- name: Проверить доступность всех инстансов под пользователем default
+  ansible.builtin.command:
+    argv:
+      - clickhouse-client
+      - "--host={{ hostvars[item.host].clickhouse_node_ip }}"
+      - "--port={{ clickhouse_port_profiles[item.profile].tcp }}"
+      - "--user={{ clickhouse_user }}"
+      - "--password={{ clickhouse_password }}"
+      - "--query=SELECT 1"
+  loop: "{{ clickhouse_instances }}"
+  register: clickhouse_schema_ready
+  until: clickhouse_schema_ready.rc == 0
+  retries: 30
+  delay: 2
+  changed_when: false
+
+- name: Проверить, создана ли схема на всех узлах
+  ansible.builtin.command:
+    argv:
+      - clickhouse-client
+      - "--host=127.0.0.1"
+      - "--port={{ clickhouse_schema_ports.tcp }}"
+      - "--user={{ clickhouse_user }}"
+      - "--password={{ clickhouse_password }}"
+      - >-
+        --query=SELECT count() FROM clusterAllReplicas(
+        '{{ clickhouse_cluster_name }}', system.tables)
+        WHERE database = '{{ clickhouse_database }}'
+        AND name IN ('{{ clickhouse_events_local_table }}',
+        '{{ clickhouse_events_distributed_table }}')
+  vars:
+    clickhouse_schema_ports: >-
+      {{ clickhouse_port_profiles[clickhouse_schema_instance.profile] }}
+  register: clickhouse_schema_present
+  changed_when: false
+
+- name: Сформировать SQL-файл схемы
+  ansible.builtin.template:
+    src: schema.sql.j2
+    dest: "{{ clickhouse_config_root }}/schema.sql"
+    owner: clickhouse
+    group: clickhouse
+    mode: "0640"
+
+- name: Применить схему через ON CLUSTER
+  ansible.builtin.command:
+    argv:
+      - clickhouse-client
+      - "--host=127.0.0.1"
+      - "--port={{ clickhouse_schema_ports.tcp }}"
+      - "--user={{ clickhouse_user }}"
+      - "--password={{ clickhouse_password }}"
+      - "--multiquery"
+      - "--queries-file={{ clickhouse_config_root }}/schema.sql"
+  vars:
+    clickhouse_schema_ports: >-
+      {{ clickhouse_port_profiles[clickhouse_schema_instance.profile] }}
+  register: clickhouse_schema_apply
+  until: clickhouse_schema_apply.rc == 0
+  retries: 30
+  delay: 5
+  changed_when: true
+  when: clickhouse_schema_present.stdout | trim != (clickhouse_schema_expected_tables | string)
+
+- name: Дождаться появления таблиц на всех узлах
+  ansible.builtin.command:
+    argv:
+      - clickhouse-client
+      - "--host={{ hostvars[item.host].clickhouse_node_ip }}"
+      - "--port={{ clickhouse_port_profiles[item.profile].tcp }}"
+      - "--user={{ clickhouse_user }}"
+      - "--password={{ clickhouse_password }}"
+      - >-
+        --query=SELECT count() FROM system.tables
+        WHERE database = '{{ clickhouse_database }}'
+        AND name IN ('{{ clickhouse_events_local_table }}',
+        '{{ clickhouse_events_distributed_table }}')
+  loop: "{{ clickhouse_instances }}"
+  register: clickhouse_schema_tables
+  until: clickhouse_schema_tables.stdout | trim == '2'
+  retries: 30
+  delay: 2
+  changed_when: false
+
+- name: Дождаться, пока реплики увидят друг друга (active_replicas = 2)
+  ansible.builtin.command:
+    argv:
+      - clickhouse-client
+      - "--host={{ hostvars[item.host].clickhouse_node_ip }}"
+      - "--port={{ clickhouse_port_profiles[item.profile].tcp }}"
+      - "--user={{ clickhouse_user }}"
+      - "--password={{ clickhouse_password }}"
+      - >-
+        --query=SELECT max(active_replicas) FROM system.replicas
+        WHERE database = '{{ clickhouse_database }}'
+        AND table = '{{ clickhouse_events_local_table }}'
+  loop: "{{ clickhouse_instances }}"
+  register: clickhouse_schema_replicas
+  until: clickhouse_schema_replicas.stdout | trim == '2'
+  retries: 30
+  delay: 2
+  changed_when: false

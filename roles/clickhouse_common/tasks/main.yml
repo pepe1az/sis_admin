@@ -1,0 +1,103 @@
+---
+# Базовая подготовка ВМ ClickHouse. Роль намеренно не использует коллекции
+# community.general/ansible.posix: проект sis_admin ставит только ansible-core.
+
+- name: Проверить, что хост работает на Debian 13
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family == 'Debian'
+      - ansible_distribution_major_version == '13'
+    fail_msg: >-
+      Роль рассчитана на Debian 13 (trixie), обнаружено:
+      {{ ansible_distribution }} {{ ansible_distribution_version }}
+    quiet: true
+
+- name: Убедиться, что python3-apt установлен (bootstrap для модуля apt)
+  ansible.builtin.raw: |
+    if ! python3 -c 'import apt_pkg' >/dev/null 2>&1; then
+      apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3-apt
+    fi
+  changed_when: false
+
+- name: Обновить кэш apt
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Установить базовые пакеты
+  ansible.builtin.apt:
+    name: "{{ clickhouse_common_packages }}"
+    state: present
+
+- name: Прочитать текущий часовой пояс
+  ansible.builtin.command: timedatectl show -p Timezone --value
+  register: clickhouse_common_timezone_current
+  changed_when: false
+
+- name: Установить часовой пояс UTC
+  ansible.builtin.command: timedatectl set-timezone {{ clickhouse_common_timezone }}
+  when: clickhouse_common_timezone_current.stdout | trim != clickhouse_common_timezone
+  changed_when: true
+
+- name: Настроить параметры ядра
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-clickhouse.conf
+    mode: "0644"
+    content: |
+      # Managed by Ansible.
+      {% for item in clickhouse_common_sysctl %}
+      {{ item.name }} = {{ item.value }}
+      {% endfor %}
+  notify: Apply clickhouse sysctl
+
+- name: Применить параметры ядра до запуска ClickHouse
+  ansible.builtin.meta: flush_handlers
+
+- name: Настроить лимиты файловых дескрипторов для пользователя clickhouse
+  ansible.builtin.copy:
+    dest: /etc/security/limits.d/90-clickhouse.conf
+    mode: "0644"
+    content: |
+      # Managed by Ansible
+      clickhouse soft nofile 500000
+      clickhouse hard nofile 500000
+      clickhouse soft nproc  131072
+      clickhouse hard nproc  131072
+
+# --- Репозиторий ClickHouse -------------------------------------------------
+- name: Создать каталог для ключей apt
+  ansible.builtin.file:
+    path: "{{ clickhouse_apt_keyring | dirname }}"
+    state: directory
+    mode: "0755"
+
+- name: Добавить GPG-ключ репозитория ClickHouse
+  ansible.builtin.copy:
+    src: clickhouse.asc
+    dest: "{{ clickhouse_apt_keyring }}"
+    mode: "0644"
+
+- name: Подключить apt-репозиторий ClickHouse
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [signed-by={{ clickhouse_apt_keyring }}]
+      {{ clickhouse_apt_repo }} {{ clickhouse_apt_component }} main
+    filename: clickhouse
+    state: present
+    update_cache: true
+
+- name: Установить пакеты ClickHouse (версия зафиксирована)
+  ansible.builtin.apt:
+    name:
+      - "clickhouse-common-static={{ clickhouse_version }}"
+      - "clickhouse-server={{ clickhouse_version }}"
+      - "clickhouse-client={{ clickhouse_version }}"
+    state: present
+    allow_downgrade: true
+
+- name: Зафиксировать версию пакетов ClickHouse (hold)
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop: "{{ clickhouse_common_packages_to_hold }}"
+  when: clickhouse_hold_packages | bool
