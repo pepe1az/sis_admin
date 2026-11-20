@@ -1,0 +1,163 @@
+lab_vms:
+- name: g2-router
+  role: router
+  dc: wan
+  ip: 172.30.2.2
+  memory: 512
+  vcpus: 1
+  nics:
+  - network: wan
+    name: wan0
+    ip: 172.30.2.2
+    mac: '52:54:00:22:00:01'
+  - network: dc1
+    name: dc1
+    ip: 10.22.1.1
+    mac: '52:54:00:22:00:02'
+  - network: dc2
+    name: dc2
+    ip: 10.22.2.1
+    mac: '52:54:00:22:00:03'
+  - network: dc3
+    name: dc3
+    ip: 10.22.3.1
+    mac: '52:54:00:22:00:04'
+  data_disks: 0
+- name: g2-ch1r1
+  role: clickhouse
+  dc: dc1
+  ip: 10.22.1.11
+  memory: 1024
+  vcpus: 1
+  nics:
+  - network: dc1
+    name: dc1
+    ip: 10.22.1.11
+    mac: '52:54:00:22:00:11'
+  data_disks: 4
+  shard: 1
+  replica: 1
+  raid_level: 10
+- name: g2-ch1r2
+  role: clickhouse
+  dc: dc2
+  ip: 10.22.2.11
+  memory: 1024
+  vcpus: 1
+  nics:
+  - network: dc2
+    name: dc2
+    ip: 10.22.2.11
+    mac: '52:54:00:22:00:12'
+  data_disks: 4
+  shard: 1
+  replica: 2
+  raid_level: 10
+- name: g2-ch2r1
+  role: clickhouse
+  dc: dc2
+  ip: 10.22.2.12
+  memory: 1024
+  vcpus: 1
+  nics:
+  - network: dc2
+    name: dc2
+    ip: 10.22.2.12
+    mac: '52:54:00:22:00:13'
+  data_disks: 4
+  shard: 2
+  replica: 1
+  raid_level: 5
+- name: g2-ch2r2
+  role: clickhouse
+  dc: dc3
+  ip: 10.22.3.12
+  memory: 1024
+  vcpus: 1
+  nics:
+  - network: dc3
+    name: dc3
+    ip: 10.22.3.12
+    mac: '52:54:00:22:00:14'
+  data_disks: 4
+  shard: 2
+  replica: 2
+  raid_level: 5
+- name: g2-ch3r1
+  role: clickhouse
+  dc: dc3
+  ip: 10.22.3.13
+  memory: 1024
+  vcpus: 1
+  nics:
+  - network: dc3
+    name: dc3
+    ip: 10.22.3.13
+    mac: '52:54:00:22:00:15'
+  data_disks: 4
+  shard: 3
+  replica: 1
+  raid_level: 6
+- name: g2-ch3r2
+  role: clickhouse
+  dc: dc1
+  ip: 10.22.1.13
+  memory: 1024
+  vcpus: 1
+  nics:
+  - network: dc1
+    name: dc1
+    ip: 10.22.1.13
+    mac: '52:54:00:22:00:16'
+  data_disks: 4
+  shard: 3
+  replica: 2
+  raid_level: 6
+- name: g2-zk1
+  role: zookeeper
+  dc: dc1
+  ip: 10.22.1.21
+  memory: 512
+  vcpus: 1
+  nics:
+  - network: dc1
+    name: dc1
+    ip: 10.22.1.21
+    mac: '52:54:00:22:00:17'
+  data_disks: 0
+- name: g2-zk2
+  role: zookeeper
+  dc: dc2
+  ip: 10.22.2.21
+  memory: 512
+  vcpus: 1
+  nics:
+  - network: dc2
+    name: dc2
+    ip: 10.22.2.21
+    mac: '52:54:00:22:00:18'
+  data_disks: 0
+- name: g2-zk3
+  role: zookeeper
+  dc: dc3
+  ip: 10.22.3.21
+  memory: 512
+  vcpus: 1
+  nics:
+  - network: dc3
+    name: dc3
+    ip: 10.22.3.21
+    mac: '52:54:00:22:00:19'
+  data_disks: 0
+- name: g2-load
+  role: load
+  dc: dc1
+  ip: 10.22.1.30
+  memory: 512
+  vcpus: 1
+  nics:
+  - network: dc1
+    name: dc1
+    ip: 10.22.1.30
+    mac: '52:54:00:22:00:28'
+  data_disks: 0

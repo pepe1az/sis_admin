@@ -18,12 +18,12 @@
         loop_var: scenario
 
 - name: Validate local ZooKeeper isolation rollback
-  hosts: g2-ch1r1
+  hosts: clickhouse[0]
   become: true
   gather_facts: false
   tasks:
     - name: Start timed ZooKeeper isolation
-      ansible.builtin.command: g2-chaos isolate-zk --node 10.22.1.11 --seconds 10
+      ansible.builtin.command: g2-chaos isolate-zk --node {{ ansible_host }} --seconds 10
       changed_when: true
     - name: Inspect active isolation rules
       ansible.builtin.command: nft list table inet g2_chaos

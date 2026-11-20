@@ -4,6 +4,11 @@
     that:
       - ansible_facts.distribution == 'Debian'
       - ansible_facts.distribution_major_version == '13'
+- name: Maintain team access to existing guests
+  ansible.builtin.include_role:
+    name: ssh_access
+  vars:
+    ssh_access_user: "{{ lab_user }}"
 - name: Install base network and management tools
   ansible.builtin.apt:
     name: [python3, sudo, qemu-guest-agent, curl, iputils-ping, traceroute, mtr-tiny, tcpdump, nftables, chrony]
@@ -30,14 +35,14 @@
     dest: /etc/nftables.conf
     mode: '0644'
     validate: /usr/sbin/nft -c -f %s
-  when: vm.role == 'zookeeper'
+  when: vm.role == 'zookeeper' or vm.zookeeper | default(false)
   notify: Reload guest firewall
 - name: Enable ZooKeeper firewall
   ansible.builtin.systemd_service:
     name: nftables
     state: started
     enabled: true
-  when: vm.role == 'zookeeper'
+  when: vm.role == 'zookeeper' or vm.zookeeper | default(false)
 - name: Set break-glass console password with SSH password login disabled
   ansible.builtin.user:
     name: "{{ lab_user }}"

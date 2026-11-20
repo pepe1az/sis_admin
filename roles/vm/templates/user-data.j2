@@ -10,7 +10,9 @@ users:
     lock_passwd: true
     sudo: ALL=(ALL) NOPASSWD:ALL
     ssh_authorized_keys:
-      - {{ lookup('file', lab_public_key_file) }}
+{% for key in lab_authorized_keys | unique %}
+      - {{ key | to_json }}
+{% endfor %}
 write_files:
   - path: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
     content: 'network: {config: disabled}'

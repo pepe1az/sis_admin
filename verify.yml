@@ -27,6 +27,10 @@
         that:
           - ansible_facts.distribution == 'Debian'
           - ansible_facts.distribution_major_version == '13'
+    - name: Verify guest memory matches the configured allocation
+      ansible.builtin.assert:
+        that: ansible_facts.memtotal_mb >= (vm.memory * 0.90)
+        fail_msg: Guest memory is below the configured allocation; a cold restart may be needed.
     - name: Wait for clean cloud-init completion
       ansible.builtin.command: cloud-init status --wait
       changed_when: false
@@ -67,9 +71,9 @@
             | map(attribute='size') | unique | list == [lab_data_disk_gb * 1024 * 1024 * 1024]
       when: vm.role == 'clickhouse'
     - name: Show cross-DC path
-      ansible.builtin.command: traceroute -n -I -m 4 -w 1 10.22.2.21
+      ansible.builtin.command: traceroute -n -I -m 4 -w 1 {{ (lab_vms | selectattr('dc', 'equalto', 'dc2') | first).ip }}
       changed_when: false
-      when: inventory_hostname == 'g2-ch1r1'
+      when: inventory_hostname == groups['clickhouse'][0]
     - name: Verify effective SSH policy
       ansible.builtin.command: /usr/sbin/sshd -T
       register: ssh_policy

@@ -22,7 +22,7 @@
     <disk type="file" device="disk">
       <driver name="qemu" type="qcow2" cache="none"/>
       <source file="{{ lab_dir }}/{{ vm.name }}/data{{ index }}.qcow2"/>
-      <target dev="vd{{ 'bcdefg'[index - 1] }}" bus="virtio"/>
+      <target dev="vd{{ 'bcdefghijklmnopqrstuvwxyz'[index - 1] }}" bus="virtio"/>
       <serial>{{ vm.name }}-data{{ index }}</serial>
     </disk>
 {% endfor %}

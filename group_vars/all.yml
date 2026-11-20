@@ -1,9 +1,8 @@
----
 lab_prefix: g2-
 lab_dir: /var/lib/libvirt/images/itmo-g2
 lab_domain: corp.internal
 lab_user: ansible
-lab_public_key_file: '{{ lookup(''env'', ''HOME'') }}/.ssh/id_rsa.pub'
+lab_public_key_file: ''
 lab_root_disk_gb: 8
 lab_data_disk_gb: 5
 lab_dns:
@@ -54,132 +53,123 @@ lab_vms:
     ip: 10.22.3.1
     mac: '52:54:00:22:00:04'
   data_disks: 0
-- name: g2-ch1r1
+- name: g2-dc1
   role: clickhouse
+  zookeeper: true
+  zookeeper_id: 1
   dc: dc1
-  ip: 10.22.1.11
-  memory: 1024
-  vcpus: 1
+  ip: 10.22.1.10
+  memory: 4096
+  vcpus: 2
   nics:
   - network: dc1
     name: dc1
-    ip: 10.22.1.11
-    mac: '52:54:00:22:00:11'
-  data_disks: 4
-  shard: 1
-  replica: 1
-  raid_level: 10
-- name: g2-ch1r2
+    ip: 10.22.1.10
+    mac: '52:54:00:22:01:01'
+  data_disks: 8
+  clickhouse_instances:
+  - name: ch1r1
+    shard: 1
+    replica: 1
+    raid_level: 10
+    tcp_port: 9000
+    http_port: 8123
+    interserver_port: 9009
+    data_disks:
+    - vdb
+    - vdc
+    - vdd
+    - vde
+  - name: ch3r2
+    shard: 3
+    replica: 2
+    raid_level: 6
+    tcp_port: 9001
+    http_port: 8124
+    interserver_port: 9010
+    data_disks:
+    - vdf
+    - vdg
+    - vdh
+    - vdi
+- name: g2-dc2
   role: clickhouse
+  zookeeper: true
+  zookeeper_id: 2
   dc: dc2
-  ip: 10.22.2.11
-  memory: 1024
-  vcpus: 1
+  ip: 10.22.2.10
+  memory: 4096
+  vcpus: 2
   nics:
   - network: dc2
     name: dc2
-    ip: 10.22.2.11
-    mac: '52:54:00:22:00:12'
-  data_disks: 4
-  shard: 1
-  replica: 2
-  raid_level: 10
-- name: g2-ch2r1
+    ip: 10.22.2.10
+    mac: '52:54:00:22:01:02'
+  data_disks: 8
+  clickhouse_instances:
+  - name: ch1r2
+    shard: 1
+    replica: 2
+    raid_level: 10
+    tcp_port: 9000
+    http_port: 8123
+    interserver_port: 9009
+    data_disks:
+    - vdb
+    - vdc
+    - vdd
+    - vde
+  - name: ch2r1
+    shard: 2
+    replica: 1
+    raid_level: 5
+    tcp_port: 9001
+    http_port: 8124
+    interserver_port: 9010
+    data_disks:
+    - vdf
+    - vdg
+    - vdh
+    - vdi
+- name: g2-dc3
   role: clickhouse
-  dc: dc2
-  ip: 10.22.2.12
-  memory: 1024
-  vcpus: 1
-  nics:
-  - network: dc2
-    name: dc2
-    ip: 10.22.2.12
-    mac: '52:54:00:22:00:13'
-  data_disks: 4
-  shard: 2
-  replica: 1
-  raid_level: 5
-- name: g2-ch2r2
-  role: clickhouse
+  zookeeper: true
+  zookeeper_id: 3
   dc: dc3
-  ip: 10.22.3.12
-  memory: 1024
-  vcpus: 1
+  ip: 10.22.3.10
+  memory: 4096
+  vcpus: 2
   nics:
   - network: dc3
     name: dc3
-    ip: 10.22.3.12
-    mac: '52:54:00:22:00:14'
-  data_disks: 4
-  shard: 2
-  replica: 2
-  raid_level: 5
-- name: g2-ch3r1
-  role: clickhouse
-  dc: dc3
-  ip: 10.22.3.13
-  memory: 1024
-  vcpus: 1
-  nics:
-  - network: dc3
-    name: dc3
-    ip: 10.22.3.13
-    mac: '52:54:00:22:00:15'
-  data_disks: 4
-  shard: 3
-  replica: 1
-  raid_level: 6
-- name: g2-ch3r2
-  role: clickhouse
-  dc: dc1
-  ip: 10.22.1.13
-  memory: 1024
-  vcpus: 1
-  nics:
-  - network: dc1
-    name: dc1
-    ip: 10.22.1.13
-    mac: '52:54:00:22:00:16'
-  data_disks: 4
-  shard: 3
-  replica: 2
-  raid_level: 6
-- name: g2-zk1
-  role: zookeeper
-  dc: dc1
-  ip: 10.22.1.21
-  memory: 512
-  vcpus: 1
-  nics:
-  - network: dc1
-    name: dc1
-    ip: 10.22.1.21
-    mac: '52:54:00:22:00:17'
-  data_disks: 0
-- name: g2-zk2
-  role: zookeeper
-  dc: dc2
-  ip: 10.22.2.21
-  memory: 512
-  vcpus: 1
-  nics:
-  - network: dc2
-    name: dc2
-    ip: 10.22.2.21
-    mac: '52:54:00:22:00:18'
-  data_disks: 0
-- name: g2-zk3
-  role: zookeeper
-  dc: dc3
-  ip: 10.22.3.21
-  memory: 512
-  vcpus: 1
-  nics:
-  - network: dc3
-    name: dc3
-    ip: 10.22.3.21
-    mac: '52:54:00:22:00:19'
-  data_disks: 0
+    ip: 10.22.3.10
+    mac: '52:54:00:22:01:03'
+  data_disks: 8
+  clickhouse_instances:
+  - name: ch2r2
+    shard: 2
+    replica: 2
+    raid_level: 5
+    tcp_port: 9000
+    http_port: 8123
+    interserver_port: 9009
+    data_disks:
+    - vdb
+    - vdc
+    - vdd
+    - vde
+  - name: ch3r1
+    shard: 3
+    replica: 1
+    raid_level: 6
+    tcp_port: 9001
+    http_port: 8124
+    interserver_port: 9010
+    data_disks:
+    - vdf
+    - vdg
+    - vdh
+    - vdi
 - name: g2-load
   role: load
   dc: dc1
@@ -192,3 +182,11 @@ lab_vms:
     ip: 10.22.1.30
     mac: '52:54:00:22:00:28'
   data_disks: 0
+lab_team_public_keys:
+- '{{ lookup(''file'', playbook_dir + ''/keys/team/MacBook-Pro.pub'') }}'
+- '{{ lookup(''file'', playbook_dir + ''/keys/team/DeadlyM0uth.pub'') }}'
+- '{{ lookup(''file'', playbook_dir + ''/keys/team/Kirill.pub'') }}'
+- '{{ lookup(''file'', playbook_dir + ''/keys/team/Danila.pub'') }}'
+- '{{ lookup(''file'', playbook_dir + ''/keys/team/Daniil.pub'') }}'
+lab_authorized_keys: '{{ lab_team_public_keys + ([lookup(''file'', lab_public_key_file)]
+  if lab_public_key_file | length > 0 else []) }}'

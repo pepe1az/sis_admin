@@ -1,0 +1,27 @@
+---
+- name: Validate authorized public keys
+  ansible.builtin.assert:
+    that:
+      - lab_authorized_keys | length >= 5
+      - lab_authorized_keys | reject('match', '^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp[0-9]+) ') | list | length == 0
+    fail_msg: Configure the five team public keys; never pass private keys here.
+- name: Resolve the existing SSH account
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ ssh_access_user }}"
+- name: Ensure SSH directory permissions
+  ansible.builtin.file:
+    path: "{{ ansible_facts.getent_passwd[ssh_access_user][4] }}/.ssh"
+    state: directory
+    owner: "{{ ssh_access_user }}"
+    group: "{{ ansible_facts.getent_passwd[ssh_access_user][2] }}"
+    mode: '0700'
+- name: Maintain team keys without removing existing administrator keys
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_facts.getent_passwd[ssh_access_user][4] }}/.ssh/authorized_keys"
+    create: true
+    owner: "{{ ssh_access_user }}"
+    group: "{{ ansible_facts.getent_passwd[ssh_access_user][2] }}"
+    mode: '0600'
+    marker: '# {mark} ITMO TEAM SSH KEYS'
+    block: "{{ lab_authorized_keys | unique | join('\n') }}"

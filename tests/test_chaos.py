@@ -81,6 +81,37 @@ class RollbackTests(unittest.TestCase):
             self.assertFalse(any(c.args[0][:3] == ['ip', 'link', 'set'] for c in run.call_args_list))
         self.assertFalse(self.active.exists())
 
+    def test_colocated_zookeeper_isolation_covers_all_peers_and_loopback(self):
+        topology = {
+            'networks': [{'name': 'dc1'}],
+            'vms': [
+                {'name': f'g2-dc{i}', 'ip': f'10.22.{i}.10',
+                 'role': 'clickhouse', 'zookeeper': True}
+                for i in range(1, 4)
+            ],
+        }
+        original_read = Path.read_text
+        def read(path, *args, **kwargs):
+            if str(path) == '/etc/itmo-g2-topology.json':
+                return json.dumps(topology)
+            return original_read(path, *args, **kwargs)
+        def command(argv):
+            if argv == ['hostname', '-s']:
+                return 'g2-dc1'
+            return ''
+        with patch('sys.argv', ['g2-chaos', 'isolate-zk', '--node', '10.22.1.10']), patch.object(chaos.os, 'geteuid', return_value=0), patch.object(Path, 'read_text', read), patch.object(chaos, 'run', side_effect=command) as run:
+            chaos.main()
+            rules = (self.root / 'rules.nft').read_text()
+            for ip in ['10.22.1.10', '10.22.2.10', '10.22.3.10', '127.0.0.1']:
+                self.assertIn(ip, rules)
+            self.assertIn('tcp dport 2181 drop', rules)
+            self.assertNotIn('2888', rules)
+            self.assertNotIn('3888', rules)
+            commands = [call.args[0] for call in run.call_args_list]
+            timer = next(i for i, c in enumerate(commands) if c[0] == 'systemd-run')
+            apply = next(i for i, c in enumerate(commands) if c[:2] == ['nft', '-f'])
+            self.assertLess(timer, apply)
+
     def run_dc_scenario(self, first='dc1', second='dc2', fail_destroy=None, timer_failure=False):
         topology = {
             'networks': [{'name': dc} for dc in ['dc1', 'dc2', 'dc3']],

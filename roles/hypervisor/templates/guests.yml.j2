@@ -7,11 +7,14 @@ all:
 {% for role in ['router', 'clickhouse', 'zookeeper', 'load'] %}
     {{ role }}:
       hosts:
-{% for node in lab_vms if node.role == role %}
+{% for node in lab_vms if node.role == role or (role == 'zookeeper' and node.zookeeper | default(false)) %}
         {{ node.name }}:
           ansible_host: {{ node.ip }}
           dc: {{ node.dc }}
-{% if node.role == 'clickhouse' %}
+{% if node.clickhouse_instances is defined %}
+          clickhouse_instances: {{ node.clickhouse_instances | to_json }}
+          zookeeper_id: {{ node.zookeeper_id }}
+{% elif node.role == 'clickhouse' %}
           shard: {{ node.shard }}
           replica: {{ node.replica }}
           raid_level: {{ node.raid_level }}

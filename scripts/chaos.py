@@ -54,7 +54,7 @@ def main():
     parser.add_argument('--loss', type=float, default=1)
     parser.add_argument('--corrupt', type=float, default=0.1)
     parser.add_argument('--reorder', type=float, default=1)
-    parser.add_argument('--node', default='10.22.1.11')
+    parser.add_argument('--node', default='10.22.1.10')
     parser.add_argument('--expected-id')
     args = parser.parse_args()
     if os.geteuid() != 0:
@@ -130,7 +130,9 @@ def main():
                         parser.error('--node must be a ClickHouse IP from topology')
                     if run(['hostname', '-s']) != node['name']:
                         parser.error('Run isolate-zk on the ClickHouse VM specified by --node')
-                    zk_ips = ', '.join(n['ip'] for n in nodes if n['role'] == 'zookeeper')
+                    zk_ips = ', '.join(n['ip'] for n in nodes if (n['role'] == 'zookeeper' or n.get('zookeeper', False)))
+                    if node.get('zookeeper', False):
+                        zk_ips += ', 127.0.0.1'
                     rules = ('chain output { type filter hook output priority -10; policy accept; '
                              'ip daddr { ' + zk_ips + ' } tcp dport 2181 drop; } '
                              'chain input { type filter hook input priority -10; policy accept; '

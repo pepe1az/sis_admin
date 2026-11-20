@@ -1,0 +1,21 @@
+---
+- name: Update jump host keys and discover guests without provisioning VMs
+  hosts: hypervisors
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Install team keys on the existing jump account
+      ansible.builtin.include_role:
+        name: ssh_access
+      vars:
+        ssh_access_user: "{{ ansible_user }}"
+    - name: Load guest connections
+      ansible.builtin.include_tasks: playbooks/inventory.yml
+
+- name: Update team keys on existing guest accounts
+  hosts: lab_guests
+  become: true
+  gather_facts: false
+  roles:
+    - role: ssh_access
+      ssh_access_user: "{{ lab_user }}"

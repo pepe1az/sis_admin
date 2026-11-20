@@ -19,6 +19,17 @@
     - name: Require completed chaos rollback
       ansible.builtin.assert:
         that: not chaos_state.stat.exists
+    - name: Read defined VMs before any destructive action
+      ansible.builtin.command: virsh list --all --name
+      register: defined_vms
+      changed_when: false
+    - name: Refuse removing shared networks while legacy domains exist
+      ansible.builtin.assert:
+        that:
+          - >-
+            defined_vms.stdout_lines | select('match', '^g2-')
+            | difference(lab_vms | map(attribute='name') | list) | length == 0
+        fail_msg: Legacy domains use the lab networks; migrate them before destroying this topology.
     - name: Read active VMs
       ansible.builtin.command: virsh list --name
       register: active_vms
@@ -60,7 +71,8 @@
       loop: "{{ lab_networks }}"
       when: (lab_prefix + item.name) in defined_nets.stdout_lines
       changed_when: true
-    - name: Remove only managed lab disks and seeds
+    - name: Remove only disks and seeds of explicitly listed VMs
       ansible.builtin.file:
-        path: "{{ lab_dir }}"
+        path: "{{ lab_dir }}/{{ item.name }}"
         state: absent
+      loop: "{{ lab_vms }}"

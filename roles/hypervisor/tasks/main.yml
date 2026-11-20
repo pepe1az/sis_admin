@@ -20,6 +20,25 @@
       - lab_vms | map(attribute='ip') | unique | length == lab_vms | length
       - lab_vms | map(attribute='name') | unique | length == lab_vms | length
     fail_msg: Requires Debian/Ubuntu amd64, KVM, unique IPs/names and 2 GiB host memory reserve.
+- name: Check whether libvirt is already installed
+  ansible.builtin.stat:
+    path: /usr/bin/virsh
+  register: hypervisor_virsh_binary
+- name: Read existing domains before changing the lab
+  ansible.builtin.command: virsh list --all --name
+  register: hypervisor_existing_domains
+  changed_when: false
+  when: hypervisor_virsh_binary.stat.exists
+- name: Require an explicit migration for a different lab topology
+  ansible.builtin.assert:
+    that:
+      - >-
+        hypervisor_existing_domains.stdout_lines | default([])
+        | select('match', '^g2-')
+        | difference(lab_vms | map(attribute='name') | list) | length == 0
+    fail_msg: >-
+      Legacy g2 domains exist outside lab_vms. Stop here and plan data migration;
+      this playbook does not merge existing services or remove old VMs.
 - name: Install virtualization packages
   ansible.builtin.apt:
     name: [qemu-kvm, qemu-utils, libvirt-daemon-system, libvirt-clients, cloud-image-utils, python3-lxml]
@@ -138,3 +157,8 @@
     name: itmo-g2-chaos-recovery
     enabled: true
     daemon_reload: true
+- name: Maintain team access to the jump host
+  ansible.builtin.include_role:
+    name: ssh_access
+  vars:
+    ssh_access_user: "{{ ansible_user }}"
