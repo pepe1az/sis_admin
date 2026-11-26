@@ -1,0 +1,43 @@
+---
+- name: Validate the shared-host storage inventory
+  ansible.builtin.assert:
+    that:
+      - storage_host_mode in ['inspect', 'provision']
+      - clickhouse_instances | length == 2
+      - clickhouse_instances | map(attribute='name') | unique | length == 2
+      - clickhouse_instances | map(attribute='data_disks') | flatten | length == 8
+      - clickhouse_instances | map(attribute='data_disks') | flatten | unique | length == 8
+      - clickhouse_instances | map(attribute='data_disks') | flatten | sort == ['vdb', 'vdc', 'vdd', 'vde', 'vdf', 'vdg', 'vdh', 'vdi']
+
+- name: Reset observed storage plans
+  ansible.builtin.set_fact:
+    storage_host_results: {}
+
+- name: Inspect every stack before any provisioning
+  ansible.builtin.include_tasks: instance.yml
+  loop: "{{ clickhouse_instances }}"
+  loop_control:
+    loop_var: storage_instance
+    index_var: storage_instance_index
+    label: "{{ storage_instance.name }}"
+  vars:
+    storage_instance_mode: inspect
+
+- name: Require approval for both stacks before making changes
+  ansible.builtin.assert:
+    that:
+      - storage_host_approvals.get(item.name, '') == storage_host_results[item.name].approval
+    fail_msg: "Inspect both stacks and approve their exact digests in storage_host_approvals."
+  loop: "{{ clickhouse_instances }}"
+  when: storage_host_mode == 'provision'
+
+- name: Provision approved stacks sequentially
+  ansible.builtin.include_tasks: instance.yml
+  loop: "{{ clickhouse_instances }}"
+  loop_control:
+    loop_var: storage_instance
+    index_var: storage_instance_index
+    label: "{{ storage_instance.name }}"
+  vars:
+    storage_instance_mode: provision
+  when: storage_host_mode == 'provision' and not ansible_check_mode

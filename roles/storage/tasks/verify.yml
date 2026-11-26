@@ -1,0 +1,13 @@
+---
+- name: Read final RAID, LVM, filesystem and mount state
+  ansible.builtin.import_tasks: inspect.yml
+
+- name: Require the complete stack and its persistent mount
+  ansible.builtin.assert:
+    that:
+      - storage_state.md_exists
+      - storage_state.vg_exists
+      - storage_state.lv_exists
+      - storage_state.xfs_exists
+      - storage_state.mounted
+      - storage_state.fstab_matches

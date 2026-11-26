@@ -1,0 +1,18 @@
+---
+- name: Inspect or provision storage for two ClickHouse instances
+  hosts: clickhouse
+  become: true
+  gather_facts: false
+  serial: 1
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Require one explicitly selected SSH host
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts_all | length == 1
+          - ansible_limit | default('') == inventory_hostname
+          - ansible_connection | default('ssh') in ['ssh', 'ansible.builtin.ssh']
+      delegate_to: localhost
+      become: false
+  roles:
+    - storage_host

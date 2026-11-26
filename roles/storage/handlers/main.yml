@@ -1,0 +1,17 @@
+---
+- name: Rebuild initramfs for installed kernels
+  ansible.builtin.command:
+    argv: [update-initramfs, -u, -k, all]
+  become: true
+  changed_when: true
+  listen: Update storage initramfs
+
+- name: Record successful storage initramfs update
+  ansible.builtin.copy:
+    dest: /var/lib/storage-lab-initramfs.sha256
+    content: "{{ storage_config_stat.stat.checksum }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  listen: Update storage initramfs

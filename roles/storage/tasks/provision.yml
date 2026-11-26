@@ -1,0 +1,52 @@
+---
+- name: Require an exact approval digest for this plan
+  ansible.builtin.assert:
+    that:
+      - storage_approval | length == 64
+      - storage_approval == storage_state.approval
+
+- name: Lock storage provisioning on this host
+  ansible.builtin.command:
+    argv: [mkdir, /run/lock/storage-lab-provision]
+  become: true
+  changed_when: false
+
+- name: Apply storage layers under the host lock
+  become: true
+  block:
+    - name: Revalidate identity, device graph and signatures before applying
+      ansible.builtin.import_tasks: inspect.yml
+
+    - name: Refuse a plan that changed after approval
+      ansible.builtin.assert:
+        that: storage_approval == storage_state.approval
+
+    - name: Manage optional tools
+      ansible.builtin.import_tasks: packages.yml
+
+    - name: Create and verify md RAID
+      ansible.builtin.import_tasks: raid.yml
+
+    - name: Configure LVM
+      ansible.builtin.import_tasks: lvm.yml
+
+    - name: Configure XFS and the mount
+      ansible.builtin.import_tasks: filesystem.yml
+
+    - name: Configure boot assembly
+      ansible.builtin.import_tasks: boot.yml
+
+    - name: Configure event monitoring
+      ansible.builtin.import_tasks: monitor.yml
+      when: storage_monitor_enabled
+
+    - name: Apply pending boot and service changes under the lock
+      ansible.builtin.meta: flush_handlers
+
+    - name: Verify the complete stack
+      ansible.builtin.import_tasks: verify.yml
+  always:
+    - name: Release the host lock
+      ansible.builtin.command:
+        argv: [rmdir, /run/lock/storage-lab-provision]
+      changed_when: false

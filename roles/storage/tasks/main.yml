@@ -1,0 +1,37 @@
+---
+- name: Validate the requested mode
+  ansible.builtin.assert:
+    that:
+      - storage_mode in ['inspect', 'provision']
+
+- name: Build the explicit storage plan
+  ansible.builtin.set_fact:
+    storage_spec:
+      host: "{{ inventory_hostname }}"
+      address: "{{ ansible_host | default(inventory_hostname) }}"
+      machine_id: "{{ storage_expected_machine_id }}"
+      lab_id: "{{ storage_expected_lab_id }}"
+      expected_md_uuid: "{{ storage_expected_md_uuid }}"
+      expected_xfs_uuid: "{{ storage_expected_xfs_uuid }}"
+      members: "{{ storage_members }}"
+      md: "{{ storage_md_device }}"
+      level: "{{ storage_raid_level }}"
+      layout: "{{ storage_raid_layout }}"
+      chunk: "{{ storage_chunk_kib }}"
+      vg: "{{ storage_vg }}"
+      lv: "{{ storage_lv }}"
+      lv_mib: "{{ storage_lv_size_mib }}"
+      mount: "{{ storage_mountpoint }}"
+      mount_options: "{{ storage_mount_options }}"
+      monitor: "{{ storage_monitor_enabled }}"
+      install_fio: "{{ storage_install_fio }}"
+    storage_probe_source: "{{ lookup('ansible.builtin.file', role_path ~ '/files/storage_probe.py') | b64encode }}"
+
+- name: Inspect host and plan without staging a module on the guest
+  ansible.builtin.import_tasks: inspect.yml
+
+- name: Apply an explicitly approved plan
+  ansible.builtin.import_tasks: provision.yml
+  when:
+    - storage_mode == 'provision'
+    - not ansible_check_mode

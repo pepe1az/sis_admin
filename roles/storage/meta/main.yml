@@ -1,0 +1,11 @@
+---
+galaxy_info:
+  author: Storage Lab
+  description: Provision and inspect a dedicated Debian 13 lab RAID stack.
+  license: MIT
+  min_ansible_version: "2.19"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+dependencies: []

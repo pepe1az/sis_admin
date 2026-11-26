@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+[ "$#" -ge 2 ] && [ "$#" -le 3 ] || exit 64
+case "$1" in
+    ''|*[!A-Za-z0-9_]*) exit 64 ;;
+esac
+case "$2" in /dev/*) ;; *) exit 64 ;; esac
+case "${3-}" in ''|/dev/*) ;; *) exit 64 ;; esac
+case "$2${3-}" in *[!a-zA-Z0-9_./:+-]*) exit 64 ;; esac
+printf 'MESSAGE=mdadm %s on %s\nSYSLOG_IDENTIFIER=storage-lab-mdadm\nMDADM_EVENT=%s\nMDADM_ARRAY=%s\nMDADM_COMPONENT=%s\n' "$1" "$2" "$1" "$2" "${3-}" | logger --journald

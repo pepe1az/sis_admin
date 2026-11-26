@@ -1,0 +1,40 @@
+---
+- name: Validate the instance storage contract
+  ansible.builtin.assert:
+    that:
+      - storage_instance.name is match('^ch[1-3]r[1-2]$')
+      - storage_instance.raid_level | int in [5, 6, 10]
+      - storage_instance.data_disks | length == 4
+
+- name: Build the explicitly identified disk list
+  ansible.builtin.set_fact:
+    storage_host_instance_members: []
+
+- name: Add serial and by-id identity for each assigned disk
+  ansible.builtin.set_fact:
+    storage_host_instance_members: >-
+      {{ storage_host_instance_members + [{'by_id': '/dev/disk/by-id/virtio-' + inventory_hostname + '-data' + (('bcdefghi'.index(item[2:]) + 1) | string),
+           'serial': inventory_hostname + '-data' + (('bcdefghi'.index(item[2:]) + 1) | string),
+           'size_bytes': storage_host_data_disk_size_bytes | int}] }}
+  loop: "{{ storage_instance.data_disks }}"
+
+- name: Inspect or provision this independent stack
+  ansible.builtin.include_role:
+    name: storage
+  vars:
+    storage_mode: "{{ storage_instance_mode }}"
+    storage_approval: "{{ storage_host_approvals.get(storage_instance.name, '') }}"
+    storage_members: "{{ storage_host_instance_members }}"
+    storage_md_device: "/dev/md{{ storage_instance_index }}"
+    storage_raid_level: "{{ storage_instance.raid_level | int }}"
+    storage_raid_layout: "{{ 'near=2' if storage_instance.raid_level | int == 10 else 'left-symmetric' }}"
+    storage_vg: "vg_{{ storage_instance.name }}"
+    storage_lv: lv_data
+    storage_mountpoint: "/data/{{ storage_instance.name }}"
+    storage_lv_size_mib: "{{ storage_host_stack_overrides.get(storage_instance.name, {}).get('lv_size_mib', 9216) }}"
+    storage_expected_md_uuid: "{{ storage_host_stack_overrides.get(storage_instance.name, {}).get('md_uuid', '') }}"
+    storage_expected_xfs_uuid: "{{ storage_host_stack_overrides.get(storage_instance.name, {}).get('xfs_uuid', '') }}"
+
+- name: Record the observed stack state
+  ansible.builtin.set_fact:
+    storage_host_results: "{{ storage_host_results | combine({storage_instance.name: storage_state}) }}"

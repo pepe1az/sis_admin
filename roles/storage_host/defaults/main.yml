@@ -1,0 +1,5 @@
+---
+storage_host_mode: inspect
+storage_host_approvals: {}
+storage_host_stack_overrides: {}
+storage_host_data_disk_size_bytes: 5368709120

@@ -1,0 +1,22 @@
+---
+- name: Create missing VG with only the approved PV
+  community.general.lvg:
+    vg: "{{ storage_vg }}"
+    pvs: ["{{ storage_md_device }}"]
+    remove_extra_pvs: false
+    state: present
+  when: not storage_state.vg_exists
+
+- name: Verify actual PV ownership before LV changes
+  ansible.builtin.import_tasks: inspect.yml
+
+- name: Create the missing fixed-size LV
+  community.general.lvol:
+    vg: "{{ storage_vg }}"
+    lv: "{{ storage_lv }}"
+    size: "{{ storage_lv_size_mib }}m"
+    shrink: false
+    force: false
+    resizefs: false
+    state: present
+  when: not storage_state.lv_exists

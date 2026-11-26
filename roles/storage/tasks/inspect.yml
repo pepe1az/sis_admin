@@ -1,0 +1,23 @@
+---
+- name: Read storage state through SSH
+  ansible.builtin.raw: >-
+    python3 -B -c {{ ("import base64; exec(base64.b64decode('" ~ storage_probe_source ~ "'))") | quote }}
+    {{ (storage_spec | to_json | b64encode) | quote }}
+  become: true
+  check_mode: false
+  changed_when: false
+  register: storage_probe
+  failed_when: false
+
+- name: Require a readable probe response
+  ansible.builtin.assert:
+    that: storage_probe.rc == 0
+    fail_msg: "{{ storage_probe.stdout | default('') | trim }} {{ storage_probe.stderr | default('') | trim }}"
+
+- name: Decode storage plan and observations
+  ansible.builtin.set_fact:
+    storage_state: "{{ storage_probe.stdout | trim | from_json }}"
+
+- name: Show storage observations and approval digest
+  ansible.builtin.debug:
+    var: storage_state

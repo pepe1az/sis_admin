@@ -1,0 +1,19 @@
+---
+storage_mode: inspect
+storage_approval: ""
+storage_expected_machine_id: ""
+storage_expected_lab_id: ""
+storage_expected_md_uuid: ""
+storage_expected_xfs_uuid: ""
+storage_members: []
+storage_md_device: /dev/md0
+storage_raid_level: 5
+storage_raid_layout: left-symmetric
+storage_chunk_kib: 512
+storage_vg: vg_storage
+storage_lv: lv_clickhouse
+storage_lv_size_mib: 9216
+storage_mountpoint: /srv/storage-test
+storage_mount_options: defaults
+storage_install_fio: false
+storage_monitor_enabled: true
