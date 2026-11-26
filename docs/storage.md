@@ -55,8 +55,22 @@ Ansible Collections зафиксированы в [requirements.yml](../requirem
 mdadm.conf, syntax-check storage.yml и ansible-lint для новых ролей.
 На командных ВМ проверены SSH, sudo, работа Keeper и двух ClickHouse,
 наличие восьми дисков по 5 GiB и соответствие serial inventory.
-Утилиты mdadm/LVM/XFS и метка /etc/storage-lab-id отсутствуют.
-Развёртывание адаптированной роли на этих ВМ ещё не выполнялось.
+На всех трёх ВМ выполнен [storage-prepare.yml](../storage-prepare.yml).
+Установлены mdadm, lvm2, xfsprogs и initramfs-tools. Каждой ВМ назначена
+отдельная случайная UUID-метка /etc/storage-lab-id с правами 0600.
+Подготовка проверяет hostname, machine-id и Debian 13 перед изменениями,
+сохраняет существующую совпадающую метку и отказывает при несовпадении.
+
+Inspect проверил все шесть стеков и 24 диска. На каждом хосте
+`ok=27 changed=0 unreachable=0 failed=0`. Получены отдельные хеши
+планов для каждого экземпляра. RAID/LVM/XFS ещё не созданы.
+После подготовки все шесть экземпляров ClickHouse и три Keeper активны.
+[Результат проверки](../reports/storage-inspect.txt)
+
+Параметры подключения, machine-id, ожидаемые метки ВМ и хеши планов
+хранятся в локальных файлах оператора, исключённых из Git.
+`storage-prepare.yml` выполняется отдельно от read-only inspect.
+Оба playbook требуют выбора одного хоста через `--limit`.
 
 ## Ресурсы
 

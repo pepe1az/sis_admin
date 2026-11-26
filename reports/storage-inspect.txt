@@ -1,0 +1,28 @@
+Подготовка узлов и inspect хранилища, 2026-11-27
+
+Три сервисные ВМ проверены через SSH с sudo. Установлены mdadm, lvm2,
+xfsprogs и initramfs-tools. Для каждой ВМ создана отдельная случайная
+UUID-метка /etc/storage-lab-id с владельцем root и правами 0600;
+содержимое прочитано обратно и совпало с ожидаемым.
+
+На каждом хосте проверены восемь отдельных дисков по 5368709120 байт.
+By-id и serial совпадают с назначением дисков в inventory.
+Inspect подтвердил отсутствие разделов, занятых устройств, чужих сигнатур
+mdadm/LVM/файловых систем и конфликтов целевых точек монтирования.
+
+g2-dc1  ch1r1  RAID 10  /data/ch1r1  LV 9216 MiB  inspect OK
+g2-dc1  ch3r2  RAID 6  /data/ch3r2  LV 9216 MiB  inspect OK
+g2-dc2  ch1r2  RAID 10  /data/ch1r2  LV 9216 MiB  inspect OK
+g2-dc2  ch2r1  RAID 5  /data/ch2r1  LV 9216 MiB  inspect OK
+g2-dc3  ch2r2  RAID 5  /data/ch2r2  LV 9216 MiB  inspect OK
+g2-dc3  ch3r1  RAID 6  /data/ch3r1  LV 9216 MiB  inspect OK
+
+PLAY RECAP (inspect)
+g2-dc1                     : ok=27   changed=0    unreachable=0    failed=0    skipped=100  rescued=0    ignored=0
+g2-dc2                     : ok=27   changed=0    unreachable=0    failed=0    skipped=100  rescued=0    ignored=0
+g2-dc3                     : ok=27   changed=0    unreachable=0    failed=0    skipped=100  rescued=0    ignored=0
+
+После подготовки оба экземпляра ClickHouse и Keeper на каждой ВМ активны.
+Состав дисков и монтирования совпадают с исходным состоянием.
+Все шесть RAID и файловых систем находятся на стадии проверенных планов.
+Provision не выполнялся.
