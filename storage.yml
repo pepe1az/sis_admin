@@ -11,7 +11,7 @@
         that:
           - ansible_play_hosts_all | length == 1
           - ansible_limit | default('') == inventory_hostname
-          - ansible_connection | default('ssh') in ['ssh', 'ansible.builtin.ssh']
+          - hostvars[inventory_hostname].ansible_connection | default('ssh') in ['ssh', 'ansible.builtin.ssh']
       delegate_to: localhost
       become: false
   roles:
