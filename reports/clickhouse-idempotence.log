@@ -1,0 +1,1152 @@
+
+PLAY [Install ClickHouse repository and packages] ******************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [g2-dc2]
+ok: [g2-dc3]
+ok: [g2-dc1]
+
+TASK [clickhouse_repo : Install repository prerequisites] **********************
+ok: [g2-dc2]
+ok: [g2-dc1]
+ok: [g2-dc3]
+
+TASK [clickhouse_repo : Download ClickHouse signing key] ***********************
+ok: [g2-dc3]
+ok: [g2-dc1]
+ok: [g2-dc2]
+
+TASK [clickhouse_repo : Install ClickHouse signing key] ************************
+ok: [g2-dc2]
+ok: [g2-dc1]
+ok: [g2-dc3]
+
+TASK [clickhouse_repo : Add ClickHouse apt repository] *************************
+ok: [g2-dc2]
+ok: [g2-dc1]
+ok: [g2-dc3]
+
+TASK [clickhouse_repo : Refresh apt cache] *************************************
+ok: [g2-dc3]
+ok: [g2-dc1]
+ok: [g2-dc2]
+
+TASK [clickhouse_repo : Start with unversioned package names] ******************
+ok: [g2-dc1]
+ok: [g2-dc2]
+ok: [g2-dc3]
+
+TASK [clickhouse_repo : Pin package versions when requested] *******************
+ok: [g2-dc1]
+ok: [g2-dc2]
+ok: [g2-dc3]
+
+TASK [clickhouse_repo : Install ClickHouse packages] ***************************
+ok: [g2-dc2]
+ok: [g2-dc1]
+ok: [g2-dc3]
+
+TASK [clickhouse_repo : Read installed ClickHouse version] *********************
+ok: [g2-dc2]
+ok: [g2-dc3]
+ok: [g2-dc1]
+
+TASK [clickhouse_repo : Remember installed ClickHouse version] *****************
+ok: [g2-dc1]
+ok: [g2-dc2]
+ok: [g2-dc3]
+
+TASK [clickhouse_repo : Stop shipped single-instance server unit] **************
+ok: [g2-dc2]
+ok: [g2-dc3]
+ok: [g2-dc1]
+
+TASK [clickhouse_repo : Mask shipped single-instance server unit] **************
+ok: [g2-dc3]
+ok: [g2-dc2]
+ok: [g2-dc1]
+
+TASK [clickhouse_repo : Hold ClickHouse packages] ******************************
+ok: [g2-dc2]
+ok: [g2-dc3]
+ok: [g2-dc1]
+
+PLAY [Configure ClickHouse Keeper ensemble] ************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [g2-dc3]
+ok: [g2-dc2]
+ok: [g2-dc1]
+
+TASK [keeper : Require a Keeper identity and three-node ensemble] **************
+ok: [g2-dc1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc3] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [keeper : Create Keeper directories] **************************************
+ok: [g2-dc2] => (item=/var/lib/clickhouse-keeper)
+ok: [g2-dc3] => (item=/var/lib/clickhouse-keeper)
+ok: [g2-dc1] => (item=/var/lib/clickhouse-keeper)
+ok: [g2-dc2] => (item=/var/lib/clickhouse-keeper/log)
+ok: [g2-dc3] => (item=/var/lib/clickhouse-keeper/log)
+ok: [g2-dc1] => (item=/var/lib/clickhouse-keeper/log)
+ok: [g2-dc2] => (item=/var/lib/clickhouse-keeper/snapshots)
+ok: [g2-dc3] => (item=/var/lib/clickhouse-keeper/snapshots)
+ok: [g2-dc1] => (item=/var/lib/clickhouse-keeper/snapshots)
+ok: [g2-dc2] => (item=/var/log/clickhouse-keeper)
+ok: [g2-dc3] => (item=/var/log/clickhouse-keeper)
+ok: [g2-dc1] => (item=/var/log/clickhouse-keeper)
+ok: [g2-dc2] => (item=/etc/clickhouse-keeper)
+ok: [g2-dc3] => (item=/etc/clickhouse-keeper)
+ok: [g2-dc1] => (item=/etc/clickhouse-keeper)
+
+TASK [keeper : Render Keeper configuration] ************************************
+ok: [g2-dc2]
+ok: [g2-dc1]
+ok: [g2-dc3]
+
+TASK [keeper : Install the Keeper unit] ****************************************
+ok: [g2-dc2]
+ok: [g2-dc1]
+ok: [g2-dc3]
+
+TASK [keeper : Enable and start Keeper] ****************************************
+ok: [g2-dc2]
+ok: [g2-dc3]
+ok: [g2-dc1]
+
+TASK [keeper : Apply rendered Keeper configuration] ****************************
+
+TASK [keeper : Apply rendered Keeper configuration] ****************************
+
+TASK [keeper : Apply rendered Keeper configuration] ****************************
+
+TASK [keeper : Wait for the Keeper client port] ********************************
+ok: [g2-dc2]
+ok: [g2-dc3]
+ok: [g2-dc1]
+
+TASK [keeper : Check Keeper liveness] ******************************************
+ok: [g2-dc2]
+ok: [g2-dc1]
+ok: [g2-dc3]
+
+TASK [keeper : Collect Keeper state] *******************************************
+ok: [g2-dc2]
+ok: [g2-dc1]
+ok: [g2-dc3]
+
+TASK [keeper : Require Keeper to report a quorum role] *************************
+ok: [g2-dc1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc3] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Read the Keeper role on every node] **************************************
+ok: [g2-dc1]
+ok: [g2-dc2]
+ok: [g2-dc3]
+
+TASK [Require one leader and two followers] ************************************
+ok: [g2-dc1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+PLAY [Configure ClickHouse instances] ******************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [g2-dc2]
+ok: [g2-dc1]
+ok: [g2-dc3]
+
+TASK [clickhouse : Require the shared-host inventory contract] *****************
+ok: [g2-dc1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc3] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [clickhouse : Look up data mount points] **********************************
+ok: [g2-dc1] => (item=ch1r1)
+ok: [g2-dc3] => (item=ch2r2)
+ok: [g2-dc2] => (item=ch1r2)
+ok: [g2-dc1] => (item=ch3r2)
+ok: [g2-dc3] => (item=ch3r1)
+ok: [g2-dc2] => (item=ch2r1)
+
+TASK [clickhouse : Require data mount points from the storage owner] ***********
+skipping: [g2-dc1] => (item=ch1r1) 
+skipping: [g2-dc1] => (item=ch3r2) 
+skipping: [g2-dc1]
+skipping: [g2-dc2] => (item=ch1r2) 
+skipping: [g2-dc2] => (item=ch2r1) 
+skipping: [g2-dc2]
+skipping: [g2-dc3] => (item=ch2r2) 
+skipping: [g2-dc3] => (item=ch3r1) 
+skipping: [g2-dc3]
+
+TASK [clickhouse : Create per-instance data directories] ***********************
+ok: [g2-dc1] => (item=ch1r1/clickhouse)
+ok: [g2-dc2] => (item=ch1r2/clickhouse)
+ok: [g2-dc3] => (item=ch2r2/clickhouse)
+ok: [g2-dc1] => (item=ch1r1/tmp)
+ok: [g2-dc2] => (item=ch1r2/tmp)
+ok: [g2-dc3] => (item=ch2r2/tmp)
+ok: [g2-dc3] => (item=ch2r2/log)
+ok: [g2-dc2] => (item=ch1r2/log)
+ok: [g2-dc1] => (item=ch1r1/log)
+ok: [g2-dc3] => (item=ch2r2/access)
+ok: [g2-dc2] => (item=ch1r2/access)
+ok: [g2-dc1] => (item=ch1r1/access)
+ok: [g2-dc3] => (item=ch2r2/user_files)
+ok: [g2-dc2] => (item=ch1r2/user_files)
+ok: [g2-dc1] => (item=ch1r1/user_files)
+ok: [g2-dc3] => (item=ch2r2/format_schemas)
+ok: [g2-dc1] => (item=ch1r1/format_schemas)
+ok: [g2-dc2] => (item=ch1r2/format_schemas)
+ok: [g2-dc3] => (item=ch3r1/clickhouse)
+ok: [g2-dc1] => (item=ch3r2/clickhouse)
+ok: [g2-dc2] => (item=ch2r1/clickhouse)
+ok: [g2-dc3] => (item=ch3r1/tmp)
+ok: [g2-dc1] => (item=ch3r2/tmp)
+ok: [g2-dc2] => (item=ch2r1/tmp)
+ok: [g2-dc3] => (item=ch3r1/log)
+ok: [g2-dc1] => (item=ch3r2/log)
+ok: [g2-dc2] => (item=ch2r1/log)
+ok: [g2-dc3] => (item=ch3r1/access)
+ok: [g2-dc1] => (item=ch3r2/access)
+ok: [g2-dc2] => (item=ch2r1/access)
+ok: [g2-dc3] => (item=ch3r1/user_files)
+ok: [g2-dc1] => (item=ch3r2/user_files)
+ok: [g2-dc2] => (item=ch2r1/user_files)
+ok: [g2-dc3] => (item=ch3r1/format_schemas)
+ok: [g2-dc1] => (item=ch3r2/format_schemas)
+ok: [g2-dc2] => (item=ch2r1/format_schemas)
+
+TASK [clickhouse : Create per-instance configuration directories] **************
+ok: [g2-dc3] => (item=ch2r2)
+ok: [g2-dc2] => (item=ch1r2)
+ok: [g2-dc1] => (item=ch1r1)
+ok: [g2-dc1] => (item=ch3r2)
+ok: [g2-dc3] => (item=ch3r1)
+ok: [g2-dc2] => (item=ch2r1)
+
+TASK [clickhouse : Render instance configuration] ******************************
+ok: [g2-dc2] => (item=ch1r2)
+ok: [g2-dc3] => (item=ch2r2)
+ok: [g2-dc1] => (item=ch1r1)
+ok: [g2-dc2] => (item=ch2r1)
+ok: [g2-dc3] => (item=ch3r1)
+ok: [g2-dc1] => (item=ch3r2)
+
+TASK [clickhouse : Render instance users] **************************************
+ok: [g2-dc3] => (item=ch2r2)
+ok: [g2-dc2] => (item=ch1r2)
+ok: [g2-dc1] => (item=ch1r1)
+ok: [g2-dc2] => (item=ch2r1)
+ok: [g2-dc3] => (item=ch3r1)
+ok: [g2-dc1] => (item=ch3r2)
+
+TASK [clickhouse : Install the instance unit template] *************************
+ok: [g2-dc2]
+ok: [g2-dc3]
+ok: [g2-dc1]
+
+TASK [clickhouse : Enable instance units] **************************************
+ok: [g2-dc3] => (item=ch2r2)
+ok: [g2-dc2] => (item=ch1r2)
+ok: [g2-dc1] => (item=ch1r1)
+ok: [g2-dc3] => (item=ch3r1)
+ok: [g2-dc2] => (item=ch2r1)
+ok: [g2-dc1] => (item=ch3r2)
+
+TASK [clickhouse : Start instance units] ***************************************
+ok: [g2-dc3] => (item=ch2r2)
+ok: [g2-dc2] => (item=ch1r2)
+ok: [g2-dc1] => (item=ch1r1)
+ok: [g2-dc3] => (item=ch3r1)
+ok: [g2-dc2] => (item=ch2r1)
+ok: [g2-dc1] => (item=ch3r2)
+
+TASK [clickhouse : Apply rendered configuration] *******************************
+
+TASK [clickhouse : Apply rendered configuration] *******************************
+
+TASK [clickhouse : Apply rendered configuration] *******************************
+
+TASK [clickhouse : Wait for instance TCP ports] ********************************
+ok: [g2-dc3] => (item=ch2r2)
+ok: [g2-dc2] => (item=ch1r2)
+ok: [g2-dc1] => (item=ch1r1)
+ok: [g2-dc3] => (item=ch3r1)
+ok: [g2-dc2] => (item=ch2r1)
+ok: [g2-dc1] => (item=ch3r2)
+
+TASK [clickhouse : Read instance macros] ***************************************
+ok: [g2-dc3] => (item=ch2r2)
+ok: [g2-dc2] => (item=ch1r2)
+ok: [g2-dc1] => (item=ch1r1)
+ok: [g2-dc2] => (item=ch2r1)
+ok: [g2-dc3] => (item=ch3r1)
+ok: [g2-dc1] => (item=ch3r2)
+
+TASK [clickhouse : Require macros from the inventory] **************************
+ok: [g2-dc1] => (item=ch1r1) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "attempts": 1,
+        "changed": false,
+        "cmd": [
+            "clickhouse-client",
+            "--port",
+            "9000",
+            "--query",
+            "SELECT concat(macro, '=', substitution) FROM system.macros WHERE macro IN ('shard', 'replica') ORDER BY macro FORMAT TSV"
+        ],
+        "delta": "0:00:00.231291",
+        "end": "2026-11-26 14:51:23.283257",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": null,
+                "_uses_shell": false,
+                "argv": [
+                    "clickhouse-client",
+                    "--port",
+                    "9000",
+                    "--query",
+                    "SELECT concat(macro, '=', substitution) FROM system.macros WHERE macro IN ('shard', 'replica') ORDER BY macro FORMAT TSV"
+                ],
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "data_disks": [
+                "vdb",
+                "vdc",
+                "vdd",
+                "vde"
+            ],
+            "http_port": 8123,
+            "interserver_port": 9009,
+            "name": "ch1r1",
+            "raid_level": 10,
+            "replica": 1,
+            "shard": 1,
+            "tcp_port": 9000
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 14:51:23.051966",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "replica=1\nshard=1",
+        "stdout_lines": [
+            "replica=1",
+            "shard=1"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+ok: [g2-dc2] => (item=ch1r2) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "attempts": 1,
+        "changed": false,
+        "cmd": [
+            "clickhouse-client",
+            "--port",
+            "9000",
+            "--query",
+            "SELECT concat(macro, '=', substitution) FROM system.macros WHERE macro IN ('shard', 'replica') ORDER BY macro FORMAT TSV"
+        ],
+        "delta": "0:00:00.226297",
+        "end": "2026-11-26 14:51:23.081778",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": null,
+                "_uses_shell": false,
+                "argv": [
+                    "clickhouse-client",
+                    "--port",
+                    "9000",
+                    "--query",
+                    "SELECT concat(macro, '=', substitution) FROM system.macros WHERE macro IN ('shard', 'replica') ORDER BY macro FORMAT TSV"
+                ],
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "data_disks": [
+                "vdb",
+                "vdc",
+                "vdd",
+                "vde"
+            ],
+            "http_port": 8123,
+            "interserver_port": 9009,
+            "name": "ch1r2",
+            "raid_level": 10,
+            "replica": 2,
+            "shard": 1,
+            "tcp_port": 9000
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 14:51:22.855481",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "replica=2\nshard=1",
+        "stdout_lines": [
+            "replica=2",
+            "shard=1"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+ok: [g2-dc1] => (item=ch3r2) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "attempts": 1,
+        "changed": false,
+        "cmd": [
+            "clickhouse-client",
+            "--port",
+            "9001",
+            "--query",
+            "SELECT concat(macro, '=', substitution) FROM system.macros WHERE macro IN ('shard', 'replica') ORDER BY macro FORMAT TSV"
+        ],
+        "delta": "0:00:00.125126",
+        "end": "2026-11-26 14:51:24.122885",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": null,
+                "_uses_shell": false,
+                "argv": [
+                    "clickhouse-client",
+                    "--port",
+                    "9001",
+                    "--query",
+                    "SELECT concat(macro, '=', substitution) FROM system.macros WHERE macro IN ('shard', 'replica') ORDER BY macro FORMAT TSV"
+                ],
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "data_disks": [
+                "vdf",
+                "vdg",
+                "vdh",
+                "vdi"
+            ],
+            "http_port": 8124,
+            "interserver_port": 9010,
+            "name": "ch3r2",
+            "raid_level": 6,
+            "replica": 2,
+            "shard": 3,
+            "tcp_port": 9001
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 14:51:23.997759",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "replica=2\nshard=3",
+        "stdout_lines": [
+            "replica=2",
+            "shard=3"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+ok: [g2-dc2] => (item=ch2r1) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "attempts": 1,
+        "changed": false,
+        "cmd": [
+            "clickhouse-client",
+            "--port",
+            "9001",
+            "--query",
+            "SELECT concat(macro, '=', substitution) FROM system.macros WHERE macro IN ('shard', 'replica') ORDER BY macro FORMAT TSV"
+        ],
+        "delta": "0:00:00.125298",
+        "end": "2026-11-26 14:51:23.825108",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": null,
+                "_uses_shell": false,
+                "argv": [
+                    "clickhouse-client",
+                    "--port",
+                    "9001",
+                    "--query",
+                    "SELECT concat(macro, '=', substitution) FROM system.macros WHERE macro IN ('shard', 'replica') ORDER BY macro FORMAT TSV"
+                ],
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "data_disks": [
+                "vdf",
+                "vdg",
+                "vdh",
+                "vdi"
+            ],
+            "http_port": 8124,
+            "interserver_port": 9010,
+            "name": "ch2r1",
+            "raid_level": 5,
+            "replica": 1,
+            "shard": 2,
+            "tcp_port": 9001
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 14:51:23.699810",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "replica=1\nshard=2",
+        "stdout_lines": [
+            "replica=1",
+            "shard=2"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+ok: [g2-dc3] => (item=ch2r2) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "attempts": 1,
+        "changed": false,
+        "cmd": [
+            "clickhouse-client",
+            "--port",
+            "9000",
+            "--query",
+            "SELECT concat(macro, '=', substitution) FROM system.macros WHERE macro IN ('shard', 'replica') ORDER BY macro FORMAT TSV"
+        ],
+        "delta": "0:00:00.209839",
+        "end": "2026-11-26 14:51:23.048124",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": null,
+                "_uses_shell": false,
+                "argv": [
+                    "clickhouse-client",
+                    "--port",
+                    "9000",
+                    "--query",
+                    "SELECT concat(macro, '=', substitution) FROM system.macros WHERE macro IN ('shard', 'replica') ORDER BY macro FORMAT TSV"
+                ],
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "data_disks": [
+                "vdb",
+                "vdc",
+                "vdd",
+                "vde"
+            ],
+            "http_port": 8123,
+            "interserver_port": 9009,
+            "name": "ch2r2",
+            "raid_level": 5,
+            "replica": 2,
+            "shard": 2,
+            "tcp_port": 9000
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 14:51:22.838285",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "replica=2\nshard=2",
+        "stdout_lines": [
+            "replica=2",
+            "shard=2"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+ok: [g2-dc3] => (item=ch3r1) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "attempts": 1,
+        "changed": false,
+        "cmd": [
+            "clickhouse-client",
+            "--port",
+            "9001",
+            "--query",
+            "SELECT concat(macro, '=', substitution) FROM system.macros WHERE macro IN ('shard', 'replica') ORDER BY macro FORMAT TSV"
+        ],
+        "delta": "0:00:00.135751",
+        "end": "2026-11-26 14:51:23.833343",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": null,
+                "_uses_shell": false,
+                "argv": [
+                    "clickhouse-client",
+                    "--port",
+                    "9001",
+                    "--query",
+                    "SELECT concat(macro, '=', substitution) FROM system.macros WHERE macro IN ('shard', 'replica') ORDER BY macro FORMAT TSV"
+                ],
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "data_disks": [
+                "vdf",
+                "vdg",
+                "vdh",
+                "vdi"
+            ],
+            "http_port": 8124,
+            "interserver_port": 9010,
+            "name": "ch3r1",
+            "raid_level": 6,
+            "replica": 1,
+            "shard": 3,
+            "tcp_port": 9001
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 14:51:23.697592",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "replica=1\nshard=3",
+        "stdout_lines": [
+            "replica=1",
+            "shard=3"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+
+TASK [clickhouse : Require ClickHouse to see Keeper] ***************************
+ok: [g2-dc2] => (item=ch1r2)
+ok: [g2-dc1] => (item=ch1r1)
+ok: [g2-dc3] => (item=ch2r2)
+ok: [g2-dc2] => (item=ch2r1)
+ok: [g2-dc3] => (item=ch3r1)
+ok: [g2-dc1] => (item=ch3r2)
+
+TASK [clickhouse : Require a non-empty Keeper root] ****************************
+ok: [g2-dc1] => (item=ch1r1) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "cmd": [
+            "clickhouse-client",
+            "--port",
+            "9000",
+            "--query",
+            "SELECT count() FROM system.zookeeper WHERE path = '/'"
+        ],
+        "delta": "0:00:00.153500",
+        "end": "2026-11-26 14:51:25.074944",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": null,
+                "_uses_shell": false,
+                "argv": [
+                    "clickhouse-client",
+                    "--port",
+                    "9000",
+                    "--query",
+                    "SELECT count() FROM system.zookeeper WHERE path = '/'"
+                ],
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "data_disks": [
+                "vdb",
+                "vdc",
+                "vdd",
+                "vde"
+            ],
+            "http_port": 8123,
+            "interserver_port": 9009,
+            "name": "ch1r1",
+            "raid_level": 10,
+            "replica": 1,
+            "shard": 1,
+            "tcp_port": 9000
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 14:51:24.921444",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "2",
+        "stdout_lines": [
+            "2"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+ok: [g2-dc2] => (item=ch1r2) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "cmd": [
+            "clickhouse-client",
+            "--port",
+            "9000",
+            "--query",
+            "SELECT count() FROM system.zookeeper WHERE path = '/'"
+        ],
+        "delta": "0:00:00.142713",
+        "end": "2026-11-26 14:51:24.974164",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": null,
+                "_uses_shell": false,
+                "argv": [
+                    "clickhouse-client",
+                    "--port",
+                    "9000",
+                    "--query",
+                    "SELECT count() FROM system.zookeeper WHERE path = '/'"
+                ],
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "data_disks": [
+                "vdb",
+                "vdc",
+                "vdd",
+                "vde"
+            ],
+            "http_port": 8123,
+            "interserver_port": 9009,
+            "name": "ch1r2",
+            "raid_level": 10,
+            "replica": 2,
+            "shard": 1,
+            "tcp_port": 9000
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 14:51:24.831451",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "2",
+        "stdout_lines": [
+            "2"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+ok: [g2-dc1] => (item=ch3r2) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "cmd": [
+            "clickhouse-client",
+            "--port",
+            "9001",
+            "--query",
+            "SELECT count() FROM system.zookeeper WHERE path = '/'"
+        ],
+        "delta": "0:00:00.156716",
+        "end": "2026-11-26 14:51:25.978678",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": null,
+                "_uses_shell": false,
+                "argv": [
+                    "clickhouse-client",
+                    "--port",
+                    "9001",
+                    "--query",
+                    "SELECT count() FROM system.zookeeper WHERE path = '/'"
+                ],
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "data_disks": [
+                "vdf",
+                "vdg",
+                "vdh",
+                "vdi"
+            ],
+            "http_port": 8124,
+            "interserver_port": 9010,
+            "name": "ch3r2",
+            "raid_level": 6,
+            "replica": 2,
+            "shard": 3,
+            "tcp_port": 9001
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 14:51:25.821962",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "2",
+        "stdout_lines": [
+            "2"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+ok: [g2-dc3] => (item=ch2r2) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "cmd": [
+            "clickhouse-client",
+            "--port",
+            "9000",
+            "--query",
+            "SELECT count() FROM system.zookeeper WHERE path = '/'"
+        ],
+        "delta": "0:00:00.160556",
+        "end": "2026-11-26 14:51:25.075901",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": null,
+                "_uses_shell": false,
+                "argv": [
+                    "clickhouse-client",
+                    "--port",
+                    "9000",
+                    "--query",
+                    "SELECT count() FROM system.zookeeper WHERE path = '/'"
+                ],
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "data_disks": [
+                "vdb",
+                "vdc",
+                "vdd",
+                "vde"
+            ],
+            "http_port": 8123,
+            "interserver_port": 9009,
+            "name": "ch2r2",
+            "raid_level": 5,
+            "replica": 2,
+            "shard": 2,
+            "tcp_port": 9000
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 14:51:24.915345",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "2",
+        "stdout_lines": [
+            "2"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+ok: [g2-dc2] => (item=ch2r1) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "cmd": [
+            "clickhouse-client",
+            "--port",
+            "9001",
+            "--query",
+            "SELECT count() FROM system.zookeeper WHERE path = '/'"
+        ],
+        "delta": "0:00:00.150941",
+        "end": "2026-11-26 14:51:25.735331",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": null,
+                "_uses_shell": false,
+                "argv": [
+                    "clickhouse-client",
+                    "--port",
+                    "9001",
+                    "--query",
+                    "SELECT count() FROM system.zookeeper WHERE path = '/'"
+                ],
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "data_disks": [
+                "vdf",
+                "vdg",
+                "vdh",
+                "vdi"
+            ],
+            "http_port": 8124,
+            "interserver_port": 9010,
+            "name": "ch2r1",
+            "raid_level": 5,
+            "replica": 1,
+            "shard": 2,
+            "tcp_port": 9001
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 14:51:25.584390",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "2",
+        "stdout_lines": [
+            "2"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+ok: [g2-dc3] => (item=ch3r1) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "cmd": [
+            "clickhouse-client",
+            "--port",
+            "9001",
+            "--query",
+            "SELECT count() FROM system.zookeeper WHERE path = '/'"
+        ],
+        "delta": "0:00:00.143194",
+        "end": "2026-11-26 14:51:25.835059",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": null,
+                "_uses_shell": false,
+                "argv": [
+                    "clickhouse-client",
+                    "--port",
+                    "9001",
+                    "--query",
+                    "SELECT count() FROM system.zookeeper WHERE path = '/'"
+                ],
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "data_disks": [
+                "vdf",
+                "vdg",
+                "vdh",
+                "vdi"
+            ],
+            "http_port": 8124,
+            "interserver_port": 9010,
+            "name": "ch3r1",
+            "raid_level": 6,
+            "replica": 1,
+            "shard": 3,
+            "tcp_port": 9001
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 14:51:25.691865",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "2",
+        "stdout_lines": [
+            "2"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+
+TASK [Read cluster topology] ***************************************************
+ok: [g2-dc1]
+
+TASK [Require three shards with two replicas each] *****************************
+ok: [g2-dc1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Show the resulting cluster] **********************************************
+ok: [g2-dc1]
+
+TASK [Print cluster view] ******************************************************
+ok: [g2-dc1] => {
+    "clickhouse_cluster_view.stdout_lines": [
+        "   ┌─shard_num─┬─replica_num─┬─host_name────────────┬─port─┐",
+        "1. │         1 │           1 │ g2-dc1.corp.internal │ 9000 │",
+        "2. │         1 │           2 │ g2-dc2.corp.internal │ 9000 │",
+        "3. │         2 │           1 │ g2-dc2.corp.internal │ 9001 │",
+        "4. │         2 │           2 │ g2-dc3.corp.internal │ 9000 │",
+        "5. │         3 │           1 │ g2-dc1.corp.internal │ 9001 │",
+        "6. │         3 │           2 │ g2-dc3.corp.internal │ 9001 │",
+        "   └───────────┴─────────────┴──────────────────────┴──────┘"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+g2-dc1                     : ok=45   changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+g2-dc2                     : ok=40   changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+g2-dc3                     : ok=40   changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+

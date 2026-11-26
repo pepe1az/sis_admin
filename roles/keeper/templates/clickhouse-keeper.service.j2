@@ -1,0 +1,17 @@
+[Unit]
+Description=ClickHouse Keeper (Raft coordination)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=clickhouse
+Group=clickhouse
+ExecStart=/usr/bin/clickhouse keeper --config /etc/clickhouse-keeper/keeper_config.xml
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=1048576
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target

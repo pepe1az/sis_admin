@@ -1,0 +1,62 @@
+<clickhouse>
+    <profiles>
+        <default>
+            <max_memory_usage>536870912</max_memory_usage>
+            <max_threads>2</max_threads>
+            <max_execution_time>30</max_execution_time>
+        </default>
+    </profiles>
+
+    <users>
+        <default>
+            <password/>
+            <networks>
+                <ip>127.0.0.1</ip>
+                <ip>::1</ip>
+            </networks>
+            <profile>default</profile>
+            <quota>default</quota>
+            <access_management>1</access_management>
+        </default>
+
+        <cluster>
+            <password_sha256_hex>{{ clickhouse_cluster_password | hash('sha256') }}</password_sha256_hex>
+            <networks>
+                <ip>10.22.0.0/16</ip>
+            </networks>
+            <profile>default</profile>
+            <quota>default</quota>
+        </cluster>
+
+        <loadgen>
+            <password_sha256_hex>{{ clickhouse_loadgen_password | hash('sha256') }}</password_sha256_hex>
+            <networks>
+                <ip>{{ clickhouse_load_ip }}</ip>
+            </networks>
+            <profile>default</profile>
+            <quota>default</quota>
+        </loadgen>
+
+        <grafana_ro>
+            <password_sha256_hex>{{ clickhouse_grafana_password | hash('sha256') }}</password_sha256_hex>
+            <networks>
+                <ip>10.22.0.0/16</ip>
+            </networks>
+            <profile>default</profile>
+            <quota>default</quota>
+        </grafana_ro>
+    </users>
+
+    <quotas>
+        <default>
+            <interval>
+                <duration>3600</duration>
+                <queries>0</queries>
+                <errors>0</errors>
+                <result_rows>0</result_rows>
+                <read_rows>0</read_rows>
+                <execution_time>0</execution_time>
+            </interval>
+        </default>
+    </quotas>
+</clickhouse>

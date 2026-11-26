@@ -1,0 +1,7 @@
+---
+clickhouse_repo_apt_suite: lts
+clickhouse_repo_keyring: /usr/share/keyrings/clickhouse-keyring.gpg
+clickhouse_repo_version: "26.8.47.5"
+clickhouse_repo_packages:
+  - clickhouse-server
+  - clickhouse-client

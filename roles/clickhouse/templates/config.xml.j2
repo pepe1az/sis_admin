@@ -1,0 +1,85 @@
+{%- set shard_numbers = [] -%}
+{%- for host in groups['clickhouse'] | sort -%}
+{%- for inst in hostvars[host].clickhouse_instances -%}
+{%- if inst.shard not in shard_numbers -%}{%- set _ = shard_numbers.append(inst.shard) -%}{%- endif -%}
+{%- endfor -%}
+{%- endfor -%}
+{%- set instance_names = clickhouse_instances | map(attribute='name') | list -%}
+{%- set instance_index = instance_names.index(item.name) -%}
+{%- set metrics_port = clickhouse_metrics_base_port + instance_index -%}
+{%- set instance_root = clickhouse_data_root ~ '/' ~ item.name -%}
+<clickhouse>
+    <logger>
+        <level>information</level>
+        <log>{{ instance_root }}/log/clickhouse-server.log</log>
+        <errorlog>{{ instance_root }}/log/clickhouse-server.err.log</errorlog>
+        <size>100M</size>
+        <count>3</count>
+    </logger>
+
+    <listen_host>0.0.0.0</listen_host>
+    <tcp_port>{{ item.tcp_port }}</tcp_port>
+    <http_port>{{ item.http_port }}</http_port>
+    <interserver_http_host>{{ inventory_hostname }}.{{ lab_domain }}</interserver_http_host>
+    <interserver_http_port>{{ item.interserver_port }}</interserver_http_port>
+
+    <path>{{ instance_root }}/clickhouse/</path>
+    <tmp_path>{{ instance_root }}/tmp/</tmp_path>
+    <user_files_path>{{ instance_root }}/user_files/</user_files_path>
+    <format_schema_path>{{ instance_root }}/format_schemas/</format_schema_path>
+    <access_control_path>{{ instance_root }}/access/</access_control_path>
+    <users_config>/etc/clickhouse-server/{{ item.name }}/users.xml</users_config>
+
+    <macros>
+        <shard>{{ item.shard }}</shard>
+        <replica>{{ item.replica }}</replica>
+    </macros>
+
+    <zookeeper>
+{% for host in groups['zookeeper'] | sort %}
+        <node>
+            <host>{{ host }}.{{ lab_domain }}</host>
+            <port>{{ keeper_client_port }}</port>
+        </node>
+{% endfor %}
+        <session_timeout_ms>30000</session_timeout_ms>
+    </zookeeper>
+
+    <remote_servers>
+        <{{ clickhouse_cluster }}>
+{% for shard in shard_numbers | sort %}
+            <shard>
+                <internal_replication>true</internal_replication>
+{% for host in groups['clickhouse'] | sort %}
+{% for inst in hostvars[host].clickhouse_instances %}
+{% if inst.shard == shard %}
+                <replica>
+                    <host>{{ host }}.{{ lab_domain }}</host>
+                    <port>{{ inst.tcp_port }}</port>
+                    <user>{{ clickhouse_cluster_user }}</user>
+                    <password>{{ clickhouse_cluster_password }}</password>
+                </replica>
+{% endif %}
+{% endfor %}
+{% endfor %}
+            </shard>
+{% endfor %}
+        </{{ clickhouse_cluster }}>
+    </remote_servers>
+
+    <distributed_ddl>
+        <path>/clickhouse/task_queue/ddl</path>
+    </distributed_ddl>
+
+    <prometheus>
+        <endpoint>/metrics</endpoint>
+        <port>{{ metrics_port }}</port>
+        <metrics>true</metrics>
+        <events>true</events>
+        <asynchronous_metrics>true</asynchronous_metrics>
+    </prometheus>
+
+    <max_server_memory_usage>{{ clickhouse_memory_limit }}</max_server_memory_usage>
+    <max_concurrent_queries>20</max_concurrent_queries>
+    <mark_cache_size>134217728</mark_cache_size>
+</clickhouse>

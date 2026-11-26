@@ -3,7 +3,7 @@ lab_dir: /var/lib/libvirt/images/itmo-g2
 lab_domain: corp.internal
 lab_user: ansible
 lab_public_key_file: ''
-lab_root_disk_gb: 8
+lab_root_disk_gb: 12
 lab_data_disk_gb: 5
 lab_dns:
 - 1.1.1.1

@@ -1,0 +1,92 @@
+---
+- name: Install ClickHouse repository and packages
+  hosts: clickhouse
+  become: true
+  gather_facts: true
+  roles:
+    - clickhouse_repo
+
+- name: Configure ClickHouse Keeper ensemble
+  hosts: zookeeper
+  become: true
+  gather_facts: true
+  roles:
+    - keeper
+  tasks:
+    - name: Read the Keeper role on every node
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          timeout 2 bash -c 'exec 3<>/dev/tcp/127.0.0.1/2181; printf mntr >&3; cat <&3' | grep zk_server_state
+        executable: /bin/bash
+      register: keeper_states
+      changed_when: false
+      failed_when: false
+
+    - name: Require one leader and two followers  # noqa: run-once[task]
+      ansible.builtin.assert:
+        that:
+          - groups['zookeeper'] | map('extract', hostvars, 'keeper_states') | map(attribute='stdout') | select('search', 'leader') | list | length == 1
+          - groups['zookeeper'] | map('extract', hostvars, 'keeper_states') | map(attribute='stdout') | select('search', 'follower') | list | length == 2
+        fail_msg: Keeper quorum is not formed; check keeper.err.log and name resolution.
+      run_once: true
+
+- name: Configure ClickHouse instances
+  hosts: clickhouse
+  become: true
+  gather_facts: true
+  vars:
+    clickhouse_cluster: g2_cluster
+    keeper_client_port: 2181
+    # Temporary until the storage role mounts /data/<instance>:
+    # switch to /data and clickhouse_require_mounts: true afterwards.
+    clickhouse_data_root: /var/lib/clickhouse-lab
+    clickhouse_require_mounts: false
+  vars_files:
+    - vars/vault.yml
+  roles:
+    - clickhouse
+  tasks:
+    - name: Read cluster topology  # noqa: run-once[task]
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - --port
+          - "{{ hostvars[inventory_hostname].clickhouse_instances[0].tcp_port }}"
+          - --query
+          - >-
+            SELECT concat(shard_num, ':', count()) FROM system.clusters
+            WHERE cluster = '{{ clickhouse_cluster }}'
+            GROUP BY shard_num ORDER BY shard_num FORMAT TSV
+      register: clickhouse_topology
+      changed_when: false
+      run_once: true
+
+    - name: Require three shards with two replicas each  # noqa: run-once[task]
+      ansible.builtin.assert:
+        that:
+          - clickhouse_topology.stdout_lines == ["1:2", "2:2", "3:2"]
+        fail_msg: >-
+          system.clusters returned {{ clickhouse_topology.stdout_lines }}.
+          Check remote_servers rendering and listen ports.
+      run_once: true
+
+    - name: Show the resulting cluster  # noqa: run-once[task]
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - --port
+          - "{{ hostvars[inventory_hostname].clickhouse_instances[0].tcp_port }}"
+          - --query
+          - >-
+            SELECT shard_num, replica_num, host_name, port FROM system.clusters
+            WHERE cluster = '{{ clickhouse_cluster }}'
+            ORDER BY shard_num, replica_num FORMAT PrettyCompact
+      register: clickhouse_cluster_view
+      changed_when: false
+      run_once: true
+
+    - name: Print cluster view  # noqa: run-once[task]
+      ansible.builtin.debug:
+        var: clickhouse_cluster_view.stdout_lines
+      run_once: true
