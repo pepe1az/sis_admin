@@ -1,0 +1,18 @@
+CREATE DATABASE IF NOT EXISTS analytics ON CLUSTER {{ clickhouse_cluster }} ENGINE = Atomic;
+
+CREATE TABLE IF NOT EXISTS analytics.events ON CLUSTER {{ clickhouse_cluster }}
+(
+    event_time DateTime,
+    user_id UInt64,
+    region LowCardinality(String),
+    event_type LowCardinality(String),
+    amount Float64
+)
+ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/analytics/events', '{replica}')
+PARTITION BY toYYYYMMDD(event_time)
+ORDER BY (region, event_time)
+TTL event_time + INTERVAL 7 DAY;
+
+CREATE TABLE IF NOT EXISTS analytics.events_dist ON CLUSTER {{ clickhouse_cluster }}
+AS analytics.events
+ENGINE = Distributed('{{ clickhouse_cluster }}', 'analytics', 'events', cityHash64(user_id));

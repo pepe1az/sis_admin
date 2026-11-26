@@ -90,3 +90,198 @@
       ansible.builtin.debug:
         var: clickhouse_cluster_view.stdout_lines
       run_once: true
+
+- name: Create the analytics schema and verify replication
+  hosts: clickhouse
+  become: true
+  gather_facts: false
+  vars:
+    clickhouse_cluster: g2_cluster
+  vars_files:
+    - vars/vault.yml
+  tasks:
+    - name: Render the analytics schema  # noqa: run-once[task]
+      ansible.builtin.template:
+        src: roles/clickhouse/templates/schema.sql.j2
+        dest: /etc/clickhouse-server/analytics-schema.sql
+        owner: root
+        group: clickhouse
+        mode: '0640'
+      run_once: true
+
+    - name: Apply the analytics schema  # noqa: run-once[task]
+      ansible.builtin.shell:
+        cmd: >-
+          clickhouse-client --port {{ hostvars[inventory_hostname].clickhouse_instances[0].tcp_port }}
+          --multiquery < /etc/clickhouse-server/analytics-schema.sql
+        executable: /bin/bash
+      changed_when: false
+      run_once: true
+
+    - name: Create technical users and grant analytics rights
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - --port
+          - "{{ item.tcp_port }}"
+          - --multiquery
+          - --query
+          - >-
+            CREATE USER IF NOT EXISTS cluster HOST IP '10.22.0.0/16'
+            IDENTIFIED WITH sha256_password BY '{{ vault_clickhouse_cluster_password }}';
+            ALTER USER cluster IDENTIFIED WITH sha256_password BY '{{ vault_clickhouse_cluster_password }}';
+            CREATE USER IF NOT EXISTS loadgen HOST IP '10.22.1.30'
+            IDENTIFIED WITH sha256_password BY '{{ vault_clickhouse_loadgen_password }}';
+            ALTER USER loadgen IDENTIFIED WITH sha256_password BY '{{ vault_clickhouse_loadgen_password }}';
+            CREATE USER IF NOT EXISTS grafana_ro HOST IP '10.22.0.0/16'
+            IDENTIFIED WITH sha256_password BY '{{ vault_clickhouse_grafana_password }}';
+            ALTER USER grafana_ro IDENTIFIED WITH sha256_password BY '{{ vault_clickhouse_grafana_password }}';
+            GRANT SELECT ON analytics.* TO grafana_ro;
+            GRANT SELECT, INSERT ON analytics.* TO loadgen;
+            GRANT SELECT, INSERT ON analytics.* TO cluster
+      loop: "{{ hostvars[inventory_hostname].clickhouse_instances }}"
+      loop_control:
+        label: "{{ item.name }}"
+      changed_when: false
+      no_log: true
+
+    - name: Read current distributed row count  # noqa: run-once[task]
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - --port
+          - "{{ hostvars[inventory_hostname].clickhouse_instances[0].tcp_port }}"
+          - --query
+          - "SELECT count() FROM analytics.events_dist"
+      register: analytics_total
+      changed_when: false
+      run_once: true
+
+    - name: Seed a deterministic batch when the cluster is empty  # noqa: run-once[task]
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - --port
+          - "{{ hostvars[inventory_hostname].clickhouse_instances[0].tcp_port }}"
+          - --multiquery
+          - --query
+          - |
+            SET insert_distributed_sync = 1;
+            INSERT INTO analytics.events_dist
+            SELECT now() - number % 86400,
+                   number,
+                   ['msk', 'spb', 'nsk'][1 + number % 3],
+                   ['click', 'view'][1 + number % 2],
+                   (number % 1000) / 10
+            FROM numbers(10000)
+      when: analytics_total.stdout | int == 0
+      changed_when: true
+      run_once: true
+
+    - name: Synchronize replicas
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - --port
+          - "{{ item.tcp_port }}"
+          - --query
+          - "SYSTEM SYNC REPLICA analytics.events"
+      loop: "{{ hostvars[inventory_hostname].clickhouse_instances }}"
+      loop_control:
+        label: "{{ item.name }}"
+      changed_when: false
+
+    - name: Measure replica consistency  # noqa: run-once[task]
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - --port
+          - "{{ hostvars[inventory_hostname].clickhouse_instances[0].tcp_port }}"
+          - --query
+          - |
+            WITH per_replica AS
+            (
+                SELECT c.shard_num AS shard, r.cnt AS cnt
+                FROM system.clusters AS c
+                INNER JOIN
+                (
+                    SELECT hostName() AS h, tcpPort() AS p, count() AS cnt
+                    FROM clusterAllReplicas('{{ clickhouse_cluster }}', analytics.events)
+                    GROUP BY h, p
+                ) AS r
+                ON splitByChar('.', c.host_name)[1] = r.h AND c.port = r.p
+                WHERE c.cluster = '{{ clickhouse_cluster }}'
+            )
+            SELECT
+                (SELECT count() FROM per_replica) AS replicas,
+                (SELECT count() FROM
+                    (SELECT shard FROM per_replica
+                     GROUP BY shard
+                     HAVING uniqExact(cnt) = 1 AND min(cnt) > 0)
+                ) AS consistent_shards
+            FORMAT TSV
+      register: analytics_consistency
+      changed_when: false
+      retries: 12
+      delay: 5
+      until: analytics_consistency.stdout_lines == ["6\t3"]
+      run_once: true
+
+    - name: Read row counts per shard  # noqa: run-once[task]
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - --port
+          - "{{ hostvars[inventory_hostname].clickhouse_instances[0].tcp_port }}"
+          - --query
+          - |
+            WITH per_replica AS
+            (
+                SELECT c.shard_num AS shard, r.cnt AS cnt
+                FROM system.clusters AS c
+                INNER JOIN
+                (
+                    SELECT hostName() AS h, tcpPort() AS p, count() AS cnt
+                    FROM clusterAllReplicas('{{ clickhouse_cluster }}', analytics.events)
+                    GROUP BY h, p
+                ) AS r
+                ON splitByChar('.', c.host_name)[1] = r.h AND c.port = r.p
+                WHERE c.cluster = '{{ clickhouse_cluster }}'
+            )
+            SELECT shard, min(cnt), max(cnt)
+            FROM per_replica
+            GROUP BY shard
+            ORDER BY shard
+            FORMAT TSV
+      register: analytics_shards
+      changed_when: false
+      run_once: true
+
+    - name: Read distributed row count after seeding  # noqa: run-once[task]
+      ansible.builtin.command:
+        argv:
+          - clickhouse-client
+          - --port
+          - "{{ hostvars[inventory_hostname].clickhouse_instances[0].tcp_port }}"
+          - --query
+          - "SELECT count() FROM analytics.events_dist"
+      register: analytics_rows_after
+      changed_when: false
+      run_once: true
+
+    - name: Require six replicas and three consistent shards  # noqa: run-once[task]
+      ansible.builtin.assert:
+        that:
+          - analytics_consistency.stdout_lines == ["6\t3"]
+          - analytics_shards.stdout_lines | length == 3
+          - analytics_rows_after.stdout | int >= 10000
+        fail_msg: >-
+          Replication or sharding is inconsistent:
+          {{ analytics_consistency.stdout_lines }} / {{ analytics_shards.stdout_lines }}
+          / {{ analytics_rows_after.stdout }}
+      run_once: true
+
+    - name: Show row counts per shard  # noqa: run-once[task]
+      ansible.builtin.debug:
+        var: analytics_shards.stdout_lines
+      run_once: true
