@@ -1,0 +1,169 @@
+---
+- name: Require the shared-host inventory contract
+  ansible.builtin.assert:
+    that:
+      - hostvars[inventory_hostname].clickhouse_instances is defined
+      - hostvars[inventory_hostname].clickhouse_instances | length == 2
+      - groups['clickhouse'] | length == 3
+    fail_msg: ClickHouse needs inventory/guests.generated.yml with two instances per host.
+
+- name: Look up data mount points
+  ansible.builtin.command:
+    argv:
+      - findmnt
+      - -n
+      - -o
+      - TARGET
+      - --target
+      - "{{ clickhouse_data_root }}/{{ item.name }}"
+  loop: "{{ clickhouse_instances }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: clickhouse_mounts
+  changed_when: false
+  failed_when: false
+
+- name: Require data mount points from the storage owner
+  ansible.builtin.assert:
+    that:
+      - item.rc == 0
+      - item.stdout == clickhouse_data_root + '/' + item.item.name
+    fail_msg: >-
+      {{ clickhouse_data_root }}/{{ item.item.name }} is not a separate mount point.
+      ClickHouse data must live on the RAID/LVM/XFS volumes prepared by the storage
+      role. For a temporary bring-up only, pass clickhouse_require_mounts=false and
+      point clickhouse_data_root at the root disk.
+  loop: "{{ clickhouse_mounts.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when: clickhouse_require_mounts | bool
+
+- name: Create per-instance data directories
+  ansible.builtin.file:
+    path: "{{ clickhouse_data_root }}/{{ item.0.name }}/{{ item.1 }}"
+    state: directory
+    owner: clickhouse
+    group: clickhouse
+    mode: '0750'
+  loop: "{{ clickhouse_instances | product(clickhouse_instance_dirs) | list }}"
+  loop_control:
+    label: "{{ item.0.name }}/{{ item.1 }}"
+
+- name: Create per-instance configuration directories
+  ansible.builtin.file:
+    path: /etc/clickhouse-server/{{ item.name }}
+    state: directory
+    owner: root
+    group: clickhouse
+    mode: '0750'
+  loop: "{{ clickhouse_instances }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Render instance configuration
+  ansible.builtin.template:
+    src: config.xml.j2
+    dest: /etc/clickhouse-server/{{ item.name }}/config.xml
+    owner: root
+    group: clickhouse
+    mode: '0640'
+  loop: "{{ clickhouse_instances }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Restart ClickHouse instances
+
+- name: Render instance users
+  ansible.builtin.template:
+    src: users.xml.j2
+    dest: /etc/clickhouse-server/{{ item.name }}/users.xml
+    owner: root
+    group: clickhouse
+    mode: '0640'
+  loop: "{{ clickhouse_instances }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Restart ClickHouse instances
+
+- name: Install the instance unit template
+  ansible.builtin.template:
+    src: clickhouse-server@.service.j2
+    dest: /etc/systemd/system/clickhouse-server@.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart ClickHouse instances
+
+- name: Enable instance units
+  ansible.builtin.systemd_service:
+    name: clickhouse-server@{{ item.name }}
+    enabled: true
+    daemon_reload: true
+  loop: "{{ clickhouse_instances }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Start instance units
+  ansible.builtin.systemd_service:
+    name: clickhouse-server@{{ item.name }}
+    state: started
+  loop: "{{ clickhouse_instances }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Apply rendered configuration
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for instance TCP ports
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ item.tcp_port }}"
+    timeout: 120
+  loop: "{{ clickhouse_instances }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Read instance macros
+  ansible.builtin.command:
+    argv:
+      - clickhouse-client
+      - --port
+      - "{{ item.tcp_port }}"
+      - --query
+      - "SELECT concat(macro, '=', substitution) FROM system.macros WHERE macro IN ('shard', 'replica') ORDER BY macro FORMAT TSV"
+  loop: "{{ clickhouse_instances }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: clickhouse_macros
+  changed_when: false
+  retries: 15
+  delay: 2
+  until: clickhouse_macros.rc == 0
+
+- name: Require macros from the inventory
+  ansible.builtin.assert:
+    that:
+      - item.stdout_lines == ['replica=' ~ (item.item.replica | string), 'shard=' ~ (item.item.shard | string)]
+  loop: "{{ clickhouse_macros.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+
+- name: Require ClickHouse to see Keeper
+  ansible.builtin.command:
+    argv:
+      - clickhouse-client
+      - --port
+      - "{{ item.tcp_port }}"
+      - --query
+      - "SELECT count() FROM system.zookeeper WHERE path = '/'"
+  loop: "{{ clickhouse_instances }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: clickhouse_keeper
+  changed_when: false
+
+- name: Require a non-empty Keeper root
+  ansible.builtin.assert:
+    that: item.stdout | int > 0
+  loop: "{{ clickhouse_keeper.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"

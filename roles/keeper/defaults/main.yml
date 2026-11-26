@@ -1,0 +1,8 @@
+---
+keeper_client_port: 2181
+keeper_raft_port: 2888
+keeper_metrics_port: 9365
+keeper_data_dir: /var/lib/clickhouse-keeper
+keeper_log_dir: /var/log/clickhouse-keeper
+keeper_config: /etc/clickhouse-keeper/keeper_config.xml
+keeper_memory_limit: 268435456

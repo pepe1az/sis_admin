@@ -1,0 +1,84 @@
+---
+- name: Install repository prerequisites
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+      - python3-debian
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Download ClickHouse signing key
+  ansible.builtin.get_url:
+    url: https://packages.clickhouse.com/rpm/lts/repodata/repomd.xml.key
+    dest: /var/tmp/clickhouse-key.asc
+    mode: '0644'
+
+- name: Install ClickHouse signing key
+  ansible.builtin.command:
+    argv:
+      - gpg
+      - --dearmor
+      - --yes
+      - --output
+      - "{{ clickhouse_repo_keyring }}"
+      - /var/tmp/clickhouse-key.asc
+    creates: "{{ clickhouse_repo_keyring }}"
+
+- name: Add ClickHouse apt repository
+  ansible.builtin.deb822_repository:
+    name: clickhouse
+    types: [deb]
+    uris: https://packages.clickhouse.com/deb
+    suites: ["{{ clickhouse_repo_apt_suite }}"]
+    components: [main]
+    architectures: [amd64]
+    signed_by: "{{ clickhouse_repo_keyring }}"
+    state: present
+
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  changed_when: false
+
+- name: Start with unversioned package names
+  ansible.builtin.set_fact:
+    clickhouse_repo_specs: "{{ clickhouse_repo_packages }}"
+
+- name: Pin package versions when requested
+  ansible.builtin.set_fact:
+    clickhouse_repo_specs: "{{ clickhouse_repo_packages | map('regex_replace', '$', '=' + clickhouse_repo_version) | list }}"
+  when: clickhouse_repo_version | length > 0
+
+- name: Install ClickHouse packages
+  ansible.builtin.apt:
+    name: "{{ clickhouse_repo_specs }}"
+    state: present
+
+- name: Read installed ClickHouse version
+  ansible.builtin.command:
+    argv: ["dpkg-query", "-W", "-f=${Version}", "clickhouse-server"]
+  register: clickhouse_repo_installed_version
+  changed_when: false
+
+- name: Remember installed ClickHouse version
+  ansible.builtin.set_fact:
+    clickhouse_repo_actual_version: "{{ clickhouse_repo_installed_version.stdout }}"
+
+- name: Stop shipped single-instance server unit
+  ansible.builtin.systemd_service:
+    name: clickhouse-server
+    state: stopped
+    enabled: false
+  failed_when: false
+
+- name: Mask shipped single-instance server unit
+  ansible.builtin.systemd_service:
+    name: clickhouse-server
+    masked: true
+
+- name: Hold ClickHouse packages
+  ansible.builtin.command: "apt-mark hold {{ clickhouse_repo_packages | join(' ') }}"
+  changed_when: false

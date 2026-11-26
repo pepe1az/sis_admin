@@ -1,0 +1,43 @@
+<clickhouse>
+    <logger>
+        <level>information</level>
+        <log>{{ keeper_log_dir }}/keeper.log</log>
+        <errorlog>{{ keeper_log_dir }}/keeper.err.log</errorlog>
+        <size>100M</size>
+        <count>3</count>
+    </logger>
+
+    <listen_host>0.0.0.0</listen_host>
+
+    <keeper_server>
+        <tcp_port>{{ keeper_client_port }}</tcp_port>
+        <server_id>{{ hostvars[inventory_hostname].zookeeper_id }}</server_id>
+        <log_storage_path>{{ keeper_data_dir }}/log</log_storage_path>
+        <snapshot_storage_path>{{ keeper_data_dir }}/snapshots</snapshot_storage_path>
+        <max_memory_usage_soft_limit>{{ keeper_memory_limit }}</max_memory_usage_soft_limit>
+        <four_letter_word_white_list>conf,cons,envi,ruok,srvr,stat,mntr,isro,dirs</four_letter_word_white_list>
+
+        <coordination_settings>
+            <operation_timeout_ms>10000</operation_timeout_ms>
+            <session_timeout_ms>30000</session_timeout_ms>
+            <raft_logs_level>warning</raft_logs_level>
+            <snapshots_to_keep>3</snapshots_to_keep>
+        </coordination_settings>
+
+        <raft_configuration>
+{% for host in groups['zookeeper'] | sort %}
+            <server>
+                <id>{{ hostvars[host].zookeeper_id }}</id>
+                <hostname>{{ host }}.{{ lab_domain }}</hostname>
+                <port>{{ keeper_raft_port }}</port>
+            </server>
+{% endfor %}
+        </raft_configuration>
+    </keeper_server>
+
+    <prometheus>
+        <endpoint>/metrics</endpoint>
+        <port>{{ keeper_metrics_port }}</port>
+        <metrics>true</metrics>
+    </prometheus>
+</clickhouse>

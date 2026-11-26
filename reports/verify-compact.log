@@ -1,0 +1,376 @@
+
+PLAY [Discover lab guests and inspect host topology] ***************************
+
+TASK [Add lab inventory] *******************************************************
+included: /home/vadim/Projects/sis_admin/playbooks/inventory.yml for lab
+
+TASK [Register guest connections through hypervisor] ***************************
+ok: [lab] => (item=g2-router)
+ok: [lab] => (item=g2-dc1)
+ok: [lab] => (item=g2-dc2)
+ok: [lab] => (item=g2-dc3)
+ok: [lab] => (item=g2-load)
+
+TASK [Inspect all lab bridges] *************************************************
+ok: [lab] => (item={'name': 'wan', 'bridge': 'virbr-g2wan', 'cidr': '172.30.2.0/24', 'gateway': '172.30.2.1'})
+ok: [lab] => (item={'name': 'dc1', 'bridge': 'virbr-g2dc1', 'cidr': '10.22.1.0/24', 'gateway': '10.22.1.1'})
+ok: [lab] => (item={'name': 'dc2', 'bridge': 'virbr-g2dc2', 'cidr': '10.22.2.0/24', 'gateway': '10.22.2.1'})
+ok: [lab] => (item={'name': 'dc3', 'bridge': 'virbr-g2dc3', 'cidr': '10.22.3.0/24', 'gateway': '10.22.3.1'})
+
+TASK [Ensure data bridges do not have host IPv4 addresses] *********************
+ok: [lab] => (item=dc1) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "cmd": [
+            "ip",
+            "-j",
+            "address",
+            "show",
+            "dev",
+            "virbr-g2dc1"
+        ],
+        "delta": "0:00:00.005744",
+        "end": "2026-11-26 17:49:38.331478",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": "ip -j address show dev virbr-g2dc1",
+                "_uses_shell": false,
+                "argv": null,
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "bridge": "virbr-g2dc1",
+            "cidr": "10.22.1.0/24",
+            "gateway": "10.22.1.1",
+            "name": "dc1"
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 17:49:38.325734",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "[{\"ifindex\":68,\"ifname\":\"virbr-g2dc1\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"52:54:00:0e:cf:21\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"addr_info\":[]}]",
+        "stdout_lines": [
+            "[{\"ifindex\":68,\"ifname\":\"virbr-g2dc1\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"52:54:00:0e:cf:21\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"addr_info\":[]}]"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=dc2) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "cmd": [
+            "ip",
+            "-j",
+            "address",
+            "show",
+            "dev",
+            "virbr-g2dc2"
+        ],
+        "delta": "0:00:00.005241",
+        "end": "2026-11-26 17:49:38.807743",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": "ip -j address show dev virbr-g2dc2",
+                "_uses_shell": false,
+                "argv": null,
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "bridge": "virbr-g2dc2",
+            "cidr": "10.22.2.0/24",
+            "gateway": "10.22.2.1",
+            "name": "dc2"
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 17:49:38.802502",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "[{\"ifindex\":69,\"ifname\":\"virbr-g2dc2\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"52:54:00:00:33:3f\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"addr_info\":[]}]",
+        "stdout_lines": [
+            "[{\"ifindex\":69,\"ifname\":\"virbr-g2dc2\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"52:54:00:00:33:3f\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"addr_info\":[]}]"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+ok: [lab] => (item=dc3) => {
+    "ansible_loop_var": "item",
+    "changed": false,
+    "item": {
+        "ansible_loop_var": "item",
+        "changed": false,
+        "cmd": [
+            "ip",
+            "-j",
+            "address",
+            "show",
+            "dev",
+            "virbr-g2dc3"
+        ],
+        "delta": "0:00:00.005888",
+        "end": "2026-11-26 17:49:39.243544",
+        "failed": false,
+        "invocation": {
+            "module_args": {
+                "_raw_params": "ip -j address show dev virbr-g2dc3",
+                "_uses_shell": false,
+                "argv": null,
+                "chdir": null,
+                "cmd": null,
+                "creates": null,
+                "executable": null,
+                "expand_argument_vars": true,
+                "removes": null,
+                "stdin": null,
+                "stdin_add_newline": true,
+                "strip_empty_ends": true
+            }
+        },
+        "item": {
+            "bridge": "virbr-g2dc3",
+            "cidr": "10.22.3.0/24",
+            "gateway": "10.22.3.1",
+            "name": "dc3"
+        },
+        "msg": "",
+        "rc": 0,
+        "start": "2026-11-26 17:49:39.237656",
+        "stderr": "",
+        "stderr_lines": [],
+        "stdout": "[{\"ifindex\":70,\"ifname\":\"virbr-g2dc3\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"52:54:00:ef:25:3e\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"addr_info\":[]}]",
+        "stdout_lines": [
+            "[{\"ifindex\":70,\"ifname\":\"virbr-g2dc3\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"52:54:00:ef:25:3e\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"addr_info\":[]}]"
+        ]
+    },
+    "msg": "All assertions passed"
+}
+
+PLAY [Verify guest networking and storage] *************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [g2-load]
+ok: [g2-dc1]
+ok: [g2-dc3]
+ok: [g2-dc2]
+ok: [g2-router]
+
+TASK [Require Debian 13] *******************************************************
+ok: [g2-router] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc3] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-load] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Verify guest memory matches the configured allocation] *******************
+ok: [g2-router] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc3] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-load] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Wait for clean cloud-init completion] ************************************
+ok: [g2-dc2]
+ok: [g2-dc1]
+ok: [g2-dc3]
+ok: [g2-router]
+ok: [g2-load]
+
+TASK [Check every guest is reachable from every guest] *************************
+ok: [g2-load] => (item=g2-router)
+ok: [g2-dc2] => (item=g2-router)
+ok: [g2-dc3] => (item=g2-router)
+ok: [g2-router] => (item=g2-router)
+ok: [g2-dc1] => (item=g2-router)
+ok: [g2-load] => (item=g2-dc1)
+ok: [g2-dc2] => (item=g2-dc1)
+ok: [g2-router] => (item=g2-dc1)
+ok: [g2-dc3] => (item=g2-dc1)
+ok: [g2-dc1] => (item=g2-dc1)
+ok: [g2-load] => (item=g2-dc2)
+ok: [g2-router] => (item=g2-dc2)
+ok: [g2-dc2] => (item=g2-dc2)
+ok: [g2-dc3] => (item=g2-dc2)
+ok: [g2-dc1] => (item=g2-dc2)
+ok: [g2-load] => (item=g2-dc3)
+ok: [g2-dc2] => (item=g2-dc3)
+ok: [g2-router] => (item=g2-dc3)
+ok: [g2-dc3] => (item=g2-dc3)
+ok: [g2-load] => (item=g2-load)
+ok: [g2-router] => (item=g2-load)
+ok: [g2-dc2] => (item=g2-load)
+ok: [g2-dc1] => (item=g2-dc3)
+ok: [g2-dc3] => (item=g2-load)
+ok: [g2-dc1] => (item=g2-load)
+
+TASK [Check corporate names] ***************************************************
+ok: [g2-dc3] => (item=g2-router)
+ok: [g2-router] => (item=g2-router)
+ok: [g2-dc2] => (item=g2-router)
+ok: [g2-load] => (item=g2-router)
+ok: [g2-dc1] => (item=g2-router)
+ok: [g2-router] => (item=g2-dc1)
+ok: [g2-load] => (item=g2-dc1)
+ok: [g2-dc2] => (item=g2-dc1)
+ok: [g2-dc3] => (item=g2-dc1)
+ok: [g2-router] => (item=g2-dc2)
+ok: [g2-load] => (item=g2-dc2)
+ok: [g2-dc1] => (item=g2-dc1)
+ok: [g2-dc2] => (item=g2-dc2)
+ok: [g2-dc3] => (item=g2-dc2)
+ok: [g2-router] => (item=g2-dc3)
+ok: [g2-load] => (item=g2-dc3)
+ok: [g2-dc1] => (item=g2-dc2)
+ok: [g2-dc2] => (item=g2-dc3)
+ok: [g2-dc3] => (item=g2-dc3)
+ok: [g2-router] => (item=g2-load)
+ok: [g2-dc2] => (item=g2-load)
+ok: [g2-dc3] => (item=g2-load)
+ok: [g2-dc1] => (item=g2-dc3)
+ok: [g2-load] => (item=g2-load)
+ok: [g2-dc1] => (item=g2-load)
+
+TASK [Check outgoing HTTPS and DNS] ********************************************
+ok: [g2-load]
+ok: [g2-router]
+ok: [g2-dc2]
+ok: [g2-dc3]
+ok: [g2-dc1]
+
+TASK [Inspect ClickHouse data disks] *******************************************
+skipping: [g2-router]
+skipping: [g2-load]
+ok: [g2-dc3]
+ok: [g2-dc2]
+ok: [g2-dc1]
+
+TASK [Validate data disk count and size] ***************************************
+skipping: [g2-router]
+skipping: [g2-load]
+ok: [g2-dc1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc3] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Show cross-DC path] ******************************************************
+skipping: [g2-router]
+skipping: [g2-dc2]
+skipping: [g2-dc3]
+skipping: [g2-load]
+ok: [g2-dc1]
+
+TASK [Verify effective SSH policy] *********************************************
+ok: [g2-router]
+ok: [g2-load]
+ok: [g2-dc3]
+ok: [g2-dc2]
+ok: [g2-dc1]
+
+TASK [Require key-only SSH] ****************************************************
+ok: [g2-router] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc1] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc2] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-dc3] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [g2-load] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [Check serial console is available] ***************************************
+ok: [g2-load]
+ok: [g2-router]
+ok: [g2-dc1]
+ok: [g2-dc2]
+ok: [g2-dc3]
+
+TASK [Check break-glass password is set] ***************************************
+ok: [g2-dc2]
+ok: [g2-router]
+ok: [g2-load]
+ok: [g2-dc1]
+ok: [g2-dc3]
+
+PLAY RECAP *********************************************************************
+g2-dc1                     : ok=14   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+g2-dc2                     : ok=13   changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+g2-dc3                     : ok=13   changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+g2-load                    : ok=11   changed=0    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+g2-router                  : ok=11   changed=0    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+lab                        : ok=4    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

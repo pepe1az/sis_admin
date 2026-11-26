@@ -1,0 +1,81 @@
+---
+- name: Require a Keeper identity and three-node ensemble
+  ansible.builtin.assert:
+    that:
+      - hostvars[inventory_hostname].zookeeper_id is defined
+      - groups['zookeeper'] | length == 3
+    fail_msg: Keeper needs inventory/guests.generated.yml with zookeeper_id and three nodes.
+
+- name: Create Keeper directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: clickhouse
+    group: clickhouse
+    mode: '0750'
+  loop:
+    - "{{ keeper_data_dir }}"
+    - "{{ keeper_data_dir }}/log"
+    - "{{ keeper_data_dir }}/snapshots"
+    - "{{ keeper_log_dir }}"
+    - /etc/clickhouse-keeper
+
+- name: Render Keeper configuration
+  ansible.builtin.template:
+    src: keeper_config.xml.j2
+    dest: "{{ keeper_config }}"
+    owner: root
+    group: clickhouse
+    mode: '0640'
+  notify: Restart Keeper
+
+- name: Install the Keeper unit
+  ansible.builtin.template:
+    src: clickhouse-keeper.service.j2
+    dest: /etc/systemd/system/clickhouse-keeper.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Keeper
+
+- name: Enable and start Keeper
+  ansible.builtin.systemd_service:
+    name: clickhouse-keeper
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Apply rendered Keeper configuration
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for the Keeper client port
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ keeper_client_port }}"
+    timeout: 60
+
+- name: Check Keeper liveness
+  ansible.builtin.shell:
+    cmd: >-
+      timeout 2 bash -c 'exec 3<>/dev/tcp/127.0.0.1/{{ keeper_client_port }}; printf ruok >&3; cat <&3'
+  register: keeper_ruok
+  changed_when: false
+  retries: 10
+  delay: 2
+  until: keeper_ruok.stdout == 'imok'
+
+- name: Collect Keeper state
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      timeout 2 bash -c 'exec 3<>/dev/tcp/127.0.0.1/{{ keeper_client_port }}; printf mntr >&3; cat <&3' | grep -E 'zk_version|zk_server_state'
+    executable: /bin/bash
+  register: keeper_state
+  changed_when: false
+  failed_when: keeper_state.rc != 0
+
+- name: Require Keeper to report a quorum role
+  ansible.builtin.assert:
+    that:
+      - "'zk_server_state' in keeper_state.stdout"
+      - "'leader' in keeper_state.stdout or 'follower' in keeper_state.stdout"

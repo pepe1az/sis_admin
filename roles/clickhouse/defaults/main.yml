@@ -1,0 +1,19 @@
+---
+clickhouse_cluster: g2_cluster
+clickhouse_cluster_user: cluster
+clickhouse_data_root: /data
+clickhouse_instances: "{{ hostvars[inventory_hostname].clickhouse_instances }}"
+clickhouse_instance_dirs:
+  - clickhouse
+  - tmp
+  - log
+  - access
+  - user_files
+  - format_schemas
+clickhouse_metrics_base_port: 9363
+clickhouse_memory_limit: 1073741824
+clickhouse_require_mounts: true
+clickhouse_load_ip: 10.22.1.30
+clickhouse_cluster_password: "{{ vault_clickhouse_cluster_password }}"
+clickhouse_loadgen_password: "{{ vault_clickhouse_loadgen_password }}"
+clickhouse_grafana_password: "{{ vault_clickhouse_grafana_password }}"
