@@ -1,0 +1,75 @@
+Последовательная перезагрузка сервисных ВМ, 2026-11-28
+
+g2-dc1
+BOOT_ID before=de396a04-4579-4c26-a3d9-b4b59d0340dc
+BOOT_ID after=1dcd7f81-1d44-4cf0-8ce2-46b5f0bec637
+Personalities : [raid10] [raid6] [raid5] [raid4] [raid0] [raid1] 
+md1 : active raid6 vdg[1] vdi[3] vdf[0] vdh[2]
+      10475520 blocks super 1.2 level 6, 512k chunk, algorithm 2 [4/4] [UUUU]
+      bitmap: 1/1 pages [4KB], 65536KB chunk
+
+md0 : active raid10 vde[3] vdd[2] vdb[0] vdc[1]
+      10475520 blocks super 1.2 512K chunks 2 near-copies [4/4] [UUUU]
+      bitmap: 1/1 pages [4KB], 65536KB chunk
+
+unused devices: <none>
+ch1r1: /data/ch1r1 xfs 151ae430-c3d7-5fc5-80c9-bac43b1cbcd4 rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,sunit=1024,swidth=2048,noquota
+Rows/checksum before=3357	6288144887926402854
+Rows/checksum after=3357	6288144887926402854
+ch3r2: /data/ch3r2 xfs 80cd300f-7b56-5bce-ae90-48bf3b1dc957 rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,sunit=1024,swidth=2048,noquota
+Rows/checksum before=3366	17133909337495248873
+Rows/checksum after=3366	17133909337495248873
+RAID UUID, member slots, LV names/sizes and XFS UUID: unchanged
+md0/md1: idle, degraded=0
+mdmonitor, ClickHouse x2, Keeper: active
+All replicas: readonly=0, session_expired=0, queue_size=0, active_replicas=2
+
+g2-dc2
+BOOT_ID before=164dc325-9e80-46ee-b333-74fd3d56e6a8
+BOOT_ID after=0bbd9ba7-4e3c-4edf-9f7b-a294e771ec80
+Personalities : [raid10] [raid6] [raid5] [raid4] [raid0] [raid1] 
+md0 : active raid10 vde[3] vdd[2] vdc[1] vdb[0]
+      10475520 blocks super 1.2 512K chunks 2 near-copies [4/4] [UUUU]
+      bitmap: 1/1 pages [4KB], 65536KB chunk
+
+md1 : active raid5 vdf[0] vdg[1] vdi[4] vdh[2]
+      15713280 blocks super 1.2 level 5, 512k chunk, algorithm 2 [4/4] [UUUU]
+      bitmap: 1/1 pages [4KB], 65536KB chunk
+
+unused devices: <none>
+ch1r2: /data/ch1r2 xfs b45f634a-55b2-5c8d-bc20-cd56813a8e26 rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,sunit=1024,swidth=2048,noquota
+Rows/checksum before=3357	6288144887926402854
+Rows/checksum after=3357	6288144887926402854
+ch2r1: /data/ch2r1 xfs a874f6f1-1b5a-5656-87e0-390b4c458ea0 rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,sunit=1024,swidth=3072,noquota
+Rows/checksum before=3277	3211258455456780125
+Rows/checksum after=3277	3211258455456780125
+RAID UUID, member slots, LV names/sizes and XFS UUID: unchanged
+md0/md1: idle, degraded=0
+mdmonitor, ClickHouse x2, Keeper: active
+All replicas: readonly=0, session_expired=0, queue_size=0, active_replicas=2
+
+g2-dc3
+BOOT_ID before=37e7fbd2-d39a-4a9a-8534-0928ffafc4d8
+BOOT_ID after=218aec59-d0d0-4a24-a110-fe814ccc3a19
+Personalities : [raid6] [raid5] [raid4] [raid0] [raid1] [raid10] 
+md1 : active raid6 vdf[0] vdg[1] vdh[2] vdi[3]
+      10475520 blocks super 1.2 level 6, 512k chunk, algorithm 2 [4/4] [UUUU]
+      bitmap: 1/1 pages [4KB], 65536KB chunk
+
+md0 : active raid5 vdc[1] vde[4] vdd[2] vdb[0]
+      15713280 blocks super 1.2 level 5, 512k chunk, algorithm 2 [4/4] [UUUU]
+      bitmap: 1/1 pages [4KB], 65536KB chunk
+
+unused devices: <none>
+ch2r2: /data/ch2r2 xfs ba9965f0-1998-5c5d-a339-d2694e971382 rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,sunit=1024,swidth=3072,noquota
+Rows/checksum before=3277	3211258455456780125
+Rows/checksum after=3277	3211258455456780125
+ch3r1: /data/ch3r1 xfs 07e1773b-e23f-5ffb-b6e2-f9218f1717ac rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,sunit=1024,swidth=2048,noquota
+Rows/checksum before=3366	17133909337495248873
+Rows/checksum after=3366	17133909337495248873
+RAID UUID, member slots, LV names/sizes and XFS UUID: unchanged
+md0/md1: idle, degraded=0
+mdmonitor, ClickHouse x2, Keeper: active
+All replicas: readonly=0, session_expired=0, queue_size=0, active_replicas=2
+
+Следующая ВМ перезагружалась после восстановления предыдущей и проверки всех шести реплик.
