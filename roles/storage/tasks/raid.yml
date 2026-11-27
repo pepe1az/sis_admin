@@ -12,7 +12,7 @@
       {{ ['mdadm', '--create', storage_md_device, '--metadata=1.2',
           '--level=' ~ (storage_raid_level | string),
           '--raid-devices=' ~ (storage_members | length | string),
-          '--layout=' ~ storage_raid_layout, '--chunk=' ~ (storage_chunk_kib | string),
+          '--layout=' ~ ('n2' if storage_raid_level | int == 10 else storage_raid_layout), '--chunk=' ~ (storage_chunk_kib | string),
           '--bitmap=internal', '--uuid=' ~ storage_state.planned_md_uuid]
          + (storage_members | map(attribute='by_id') | list) }}
     stdin: ""
