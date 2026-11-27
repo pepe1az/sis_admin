@@ -63,7 +63,7 @@ mdadm.conf, syntax-check storage.yml и ansible-lint для новых роле�
 
 Inspect проверил все шесть стеков и 24 диска. На каждом хосте
 `ok=27 changed=0 unreachable=0 failed=0`. Получены отдельные хеши
-планов для каждого экземпляра. На g2-dc2 и g2-dc3 хранилища
+планов для каждого экземпляра. На g2-dc3 хранилища
 остаются на стадии проверенных планов.
 После подготовки все шесть экземпляров ClickHouse и три Keeper активны.
 [Результат проверки](../reports/storage-inspect.txt)
@@ -82,6 +82,13 @@ Inspect проверил все шесть стеков и 24 диска. На �
 mdmonitor активен. Повторное применение завершилось с
 `changed=0 failed=0`. ClickHouse пока использует прежние каталоги.
 [Результаты применения](../reports/storage-provision-dc1.txt)
+
+На g2-dc2 созданы RAID 10 для ch1r2 и RAID 5 для ch2r1. Оба массива
+в состоянии `[UUUU]`, `idle`, degraded=0. Два тома XFS по 9 GiB
+смонтированы в /data/ch1r2 и /data/ch2r1. Первое применение завершилось
+с changed=21, повторное — с changed=0, оба с failed=0.
+UUID совпали с планами. Mdmonitor, два ClickHouse и Keeper активны.
+[Результаты g2-dc2](../reports/storage-provision-dc2.txt)
 
 ## Ресурсы
 
