@@ -38,10 +38,8 @@
   vars:
     clickhouse_cluster: g2_cluster
     keeper_client_port: 2181
-    # Temporary until the storage role mounts /data/<instance>:
-    # switch to /data and clickhouse_require_mounts: true afterwards.
-    clickhouse_data_root: /var/lib/clickhouse-lab
-    clickhouse_require_mounts: false
+    clickhouse_data_root: /data
+    clickhouse_require_mounts: true
   vars_files:
     - vars/vault.yml
   roles:
