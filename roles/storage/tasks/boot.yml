@@ -1,0 +1,39 @@
+---
+- name: Install the local md event handler before configuring PROGRAM
+  ansible.builtin.copy:
+    src: mdadm-event
+    dest: /usr/local/sbin/storage-lab-mdadm-event
+    owner: root
+    group: root
+    mode: "0755"
+  when: storage_monitor_enabled
+
+- name: Maintain only the role-owned mdadm directives
+  ansible.builtin.blockinfile:
+    path: /etc/mdadm/mdadm.conf
+    marker: "# {mark} STORAGE LAB MANAGED"
+    block: |
+      {% for directive in storage_state.mdadm_directives %}
+      {{ directive }}
+      {% endfor %}
+    create: false
+  register: storage_mdadm_config
+
+- name: Read the current mdadm configuration digest
+  ansible.builtin.stat:
+    path: /etc/mdadm/mdadm.conf
+    checksum_algorithm: sha256
+  register: storage_config_stat
+
+- name: Read the digest of the last successful initramfs update
+  ansible.builtin.command:
+    argv: [cat, /var/lib/storage-lab-initramfs.sha256]
+  register: storage_boot_digest
+  changed_when: false
+  failed_when: storage_boot_digest.rc not in [0, 1]
+
+- name: Queue initramfs update until the current digest has been applied
+  ansible.builtin.debug:
+    msg: mdadm configuration requires an initramfs update
+  changed_when: storage_boot_digest.stdout != storage_config_stat.stat.checksum
+  notify: Update storage initramfs

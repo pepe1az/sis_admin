@@ -1,0 +1,12 @@
+---
+- name: Require the packaged mdadm monitor
+  ansible.builtin.command:
+    argv: [systemctl, show, --property=LoadState, --value, mdmonitor.service]
+  register: storage_monitor_unit
+  changed_when: false
+  failed_when: storage_monitor_unit.rc != 0 or storage_monitor_unit.stdout != 'loaded'
+
+- name: Start or refresh the packaged md monitor
+  ansible.builtin.systemd_service:
+    name: mdmonitor.service
+    state: "{{ 'restarted' if storage_mdadm_config.changed else 'started' }}"

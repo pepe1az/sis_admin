@@ -1,0 +1,38 @@
+---
+- name: Migrate one ClickHouse instance to its prepared XFS volume
+  hosts: clickhouse
+  become: true
+  gather_facts: false
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Require one explicitly selected host and instance
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts_all | length == 1
+          - ansible_limit | default('') == inventory_hostname
+          - storage_migrate_instance in (clickhouse_instances | map(attribute='name') | list)
+      delegate_to: localhost
+      become: false
+  roles:
+    - role: storage_host
+      storage_host_mode: inspect
+  tasks:
+    - name: Select the ClickHouse instance
+      ansible.builtin.set_fact:
+        storage_migrate_target: "{{ clickhouse_instances | selectattr('name', 'equalto', storage_migrate_instance) | first }}"
+
+    - name: Back up and migrate the selected instance
+      ansible.builtin.script:
+        cmd: >-
+          scripts/migrate-clickhouse-storage.py
+          --instance {{ storage_migrate_instance | quote }}
+          --port {{ storage_migrate_target.tcp_port | string | quote }}
+          --lab-id {{ storage_expected_lab_id | quote }}
+          --xfs-uuid {{ storage_host_results[storage_migrate_instance].planned_xfs_uuid | quote }}
+        executable: /usr/bin/python3
+      register: storage_migrate_result
+      changed_when: true
+
+    - name: Show migration and backup result
+      ansible.builtin.debug:
+        var: storage_migrate_result.stdout_lines

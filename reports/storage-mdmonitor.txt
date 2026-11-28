@@ -1,0 +1,37 @@
+Проверка mdmonitor → PROGRAM → journald, 2026-11-28
+
+g2-dc1
+{"MDADM_EVENT": "TestMessage", "MDADM_ARRAY": "/dev/md/md1", "MESSAGE": "mdadm TestMessage on /dev/md/md1", "SYSLOG_IDENTIFIER": "storage-lab-mdadm", "_SYSTEMD_UNIT": null}
+{"MDADM_EVENT": "TestMessage", "MDADM_ARRAY": "/dev/md/md0", "MESSAGE": "mdadm TestMessage on /dev/md/md0", "SYSLOG_IDENTIFIER": "storage-lab-mdadm", "_SYSTEMD_UNIT": "mdmonitor.service"}
+{"MDADM_EVENT": "TestMessage", "MDADM_ARRAY": "/dev/md1", "MESSAGE": "mdadm TestMessage on /dev/md1", "SYSLOG_IDENTIFIER": "storage-lab-mdadm", "_SYSTEMD_UNIT": null}
+{"MDADM_EVENT": "TestMessage", "MDADM_ARRAY": "/dev/md0", "MESSAGE": "mdadm TestMessage on /dev/md0", "SYSLOG_IDENTIFIER": "storage-lab-mdadm", "_SYSTEMD_UNIT": "mdmonitor.service"}
+Restored ExecStart=/usr/sbin/mdadm --monitor --scan
+ActiveState=active
+DropInPaths=
+Temporary drop-in removed; daemon-reload and service restart completed.
+RAID UUID/idle/degraded and mdadm.conf/fstab SHA256 match baseline.
+
+g2-dc2
+{"MDADM_EVENT": "TestMessage", "MDADM_ARRAY": "/dev/md/md1", "MESSAGE": "mdadm TestMessage on /dev/md/md1", "SYSLOG_IDENTIFIER": "storage-lab-mdadm", "_SYSTEMD_UNIT": null}
+{"MDADM_EVENT": "TestMessage", "MDADM_ARRAY": "/dev/md/md0", "MESSAGE": "mdadm TestMessage on /dev/md/md0", "SYSLOG_IDENTIFIER": "storage-lab-mdadm", "_SYSTEMD_UNIT": "mdmonitor.service"}
+{"MDADM_EVENT": "TestMessage", "MDADM_ARRAY": "/dev/md0", "MESSAGE": "mdadm TestMessage on /dev/md0", "SYSLOG_IDENTIFIER": "storage-lab-mdadm", "_SYSTEMD_UNIT": "mdmonitor.service"}
+{"MDADM_EVENT": "TestMessage", "MDADM_ARRAY": "/dev/md1", "MESSAGE": "mdadm TestMessage on /dev/md1", "SYSLOG_IDENTIFIER": "storage-lab-mdadm", "_SYSTEMD_UNIT": "mdmonitor.service"}
+Restored ExecStart=/usr/sbin/mdadm --monitor --scan
+ActiveState=active
+DropInPaths=
+Temporary drop-in removed; daemon-reload and service restart completed.
+RAID UUID/idle/degraded and mdadm.conf/fstab SHA256 match baseline.
+
+g2-dc3
+{"MDADM_EVENT": "TestMessage", "MDADM_ARRAY": "/dev/md/md1", "MESSAGE": "mdadm TestMessage on /dev/md/md1", "SYSLOG_IDENTIFIER": "storage-lab-mdadm", "_SYSTEMD_UNIT": "mdmonitor.service"}
+{"MDADM_EVENT": "TestMessage", "MDADM_ARRAY": "/dev/md/md0", "MESSAGE": "mdadm TestMessage on /dev/md/md0", "SYSLOG_IDENTIFIER": "storage-lab-mdadm", "_SYSTEMD_UNIT": "mdmonitor.service"}
+{"MDADM_EVENT": "TestMessage", "MDADM_ARRAY": "/dev/md1", "MESSAGE": "mdadm TestMessage on /dev/md1", "SYSLOG_IDENTIFIER": "storage-lab-mdadm", "_SYSTEMD_UNIT": "mdmonitor.service"}
+{"MDADM_EVENT": "TestMessage", "MDADM_ARRAY": "/dev/md0", "MESSAGE": "mdadm TestMessage on /dev/md0", "SYSLOG_IDENTIFIER": "storage-lab-mdadm", "_SYSTEMD_UNIT": null}
+Restored ExecStart=/usr/sbin/mdadm --monitor --scan
+ActiveState=active
+DropInPaths=
+Temporary drop-in removed; daemon-reload and service restart completed.
+RAID UUID/idle/degraded and mdadm.conf/fstab SHA256 match baseline.
+
+Аварийный таймер возврата установлен до временной конфигурации и отменён после успешного восстановления.
+TestMessage проверяет канал уведомлений. Обнаружение реального отказа и доставка в систему группы 1 проверяются отдельно.

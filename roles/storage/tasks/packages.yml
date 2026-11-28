@@ -1,0 +1,6 @@
+---
+- name: Install optional FIO without launching it
+  ansible.builtin.apt:
+    name: fio
+    state: present
+  when: storage_install_fio

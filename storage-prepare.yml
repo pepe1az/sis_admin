@@ -1,0 +1,88 @@
+---
+- name: Prepare tools and identity for storage inspection
+  hosts: clickhouse
+  become: true
+  gather_facts: false
+  serial: 1
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Require one explicitly selected SSH host
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts_all | length == 1
+          - ansible_limit | default('') == inventory_hostname
+          - hostvars[inventory_hostname].ansible_connection | default('ssh') in ['ssh', 'ansible.builtin.ssh']
+          - storage_expected_machine_id is match('^[0-9a-f]{32}$')
+          - storage_expected_lab_id is match('^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')
+      delegate_to: localhost
+      become: false
+
+    - name: Read actual host identity before any preparation
+      ansible.builtin.raw: cat /etc/machine-id; hostname -s; cat /etc/os-release
+      changed_when: false
+      check_mode: false
+      register: storage_prepare_identity
+
+    - name: Validate the selected Debian host
+      ansible.builtin.assert:
+        that:
+          - storage_expected_machine_id == storage_prepare_identity.stdout_lines[0] | trim
+          - inventory_hostname == storage_prepare_identity.stdout_lines[1] | trim
+          - storage_prepare_identity.stdout is search('(?m)^VERSION_ID="?13"?\r?$')
+
+    - name: Read existing storage marker metadata
+      ansible.builtin.stat:
+        path: /etc/storage-lab-id
+        follow: false
+      register: storage_prepare_marker
+
+    - name: Require an ordinary root-owned marker if present
+      ansible.builtin.assert:
+        that:
+          - storage_prepare_marker.stat.isreg | default(false)
+          - not storage_prepare_marker.stat.islnk | default(false)
+          - storage_prepare_marker.stat.uid == 0
+          - storage_prepare_marker.stat.mode == '0600'
+      when: storage_prepare_marker.stat.exists
+
+    - name: Read the existing marker
+      ansible.builtin.slurp:
+        src: /etc/storage-lab-id
+      register: storage_prepare_existing
+      when: storage_prepare_marker.stat.exists
+
+    - name: Refuse replacement of an existing identity
+      ansible.builtin.assert:
+        that:
+          - storage_prepare_existing.content | b64decode | trim == storage_expected_lab_id
+      when: storage_prepare_marker.stat.exists
+
+  tasks:
+    - name: Install storage administration tools without starting services
+      ansible.builtin.apt:
+        name: [mdadm, lvm2, xfsprogs, initramfs-tools]
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+        policy_rc_d: 101
+
+    - name: Create the explicitly assigned random VM marker
+      ansible.builtin.copy:
+        dest: /etc/storage-lab-id
+        content: "{{ storage_expected_lab_id }}\n"
+        owner: root
+        group: root
+        mode: '0600'
+        force: false
+
+    - name: Read back the storage marker
+      ansible.builtin.slurp:
+        src: /etc/storage-lab-id
+      register: storage_prepare_result
+      when: not ansible_check_mode
+
+    - name: Confirm the assigned marker
+      ansible.builtin.assert:
+        that:
+          - storage_prepare_result.content | b64decode | trim == storage_expected_lab_id
+      when: not ansible_check_mode

@@ -2,12 +2,17 @@
 Description=ClickHouse Server (%i)
 After=network-online.target clickhouse-keeper.service
 Wants=network-online.target
+{% if clickhouse_require_mounts | bool %}
+RequiresMountsFor={{ clickhouse_data_root }}/%i
+ConditionPathIsMountPoint={{ clickhouse_data_root }}/%i
+{% endif %}
 
 [Service]
 Type=simple
 User=clickhouse
 Group=clickhouse
 ExecStart=/usr/bin/clickhouse-server --config-file=/etc/clickhouse-server/%i/config.xml
+SuccessExitStatus=143
 Restart=on-failure
 RestartSec=5
 LimitNOFILE=1048576

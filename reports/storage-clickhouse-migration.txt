@@ -1,0 +1,14 @@
+ClickHouse. Последовательный перенос шести экземпляров на RAID/LVM/XFS
+
+ch1r1 /data/ch1r1/clickhouse/ rows/checksum=3357	6288144887926402854 active_replicas=2 readonly=0 queue=0
+ch3r2 /data/ch3r2/clickhouse/ rows/checksum=3366	17133909337495248873 active_replicas=2 readonly=0 queue=0
+ch1r2 /data/ch1r2/clickhouse/ rows/checksum=3357	6288144887926402854 active_replicas=2 readonly=0 queue=0
+ch2r1 /data/ch2r1/clickhouse/ rows/checksum=3277	3211258455456780125 active_replicas=2 readonly=0 queue=0
+ch2r2 /data/ch2r2/clickhouse/ rows/checksum=3277	3211258455456780125 active_replicas=2 readonly=0 queue=0
+ch3r1 /data/ch3r1/clickhouse/ rows/checksum=3366	17133909337495248873 active_replicas=2 readonly=0 queue=0
+
+Данные копировались после остановки соответствующего экземпляра.
+Перед переключением сравнивалось содержимое исходного и целевого каталогов.
+После запуска совпали число строк и sum(cityHash64(*)) таблицы analytics.events.
+Резервные копии данных и config.xml сохранены на системных дисках вне массивов
+и выгружены на контроллер. Исходные каталоги сохранены.

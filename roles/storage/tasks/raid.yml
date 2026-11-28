@@ -1,0 +1,39 @@
+---
+- name: Recheck the disk identities and blank state immediately before creation
+  ansible.builtin.import_tasks: inspect.yml
+
+- name: Require the approved plan immediately before RAID operations
+  ansible.builtin.assert:
+    that: storage_approval == storage_state.approval
+
+- name: Create only the approved new RAID
+  ansible.builtin.command:
+    argv: >-
+      {{ ['mdadm', '--create', storage_md_device, '--metadata=1.2',
+          '--level=' ~ (storage_raid_level | string),
+          '--raid-devices=' ~ (storage_members | length | string),
+          '--layout=' ~ ('n2' if storage_raid_level | int == 10 else storage_raid_layout), '--chunk=' ~ (storage_chunk_kib | string),
+          '--bitmap=internal', '--uuid=' ~ storage_state.planned_md_uuid]
+         + (storage_members | map(attribute='by_id') | list) }}
+    stdin: ""
+    stdin_add_newline: false
+  changed_when: true
+  when: not storage_state.md_exists
+
+- name: Wait for initialization to complete
+  ansible.builtin.command:
+    argv: [cat, "/sys/block/{{ storage_md_device | basename }}/md/sync_action"]
+  register: storage_sync
+  changed_when: false
+  until: storage_sync.stdout == 'idle'
+  retries: 180
+  delay: 5
+
+- name: Read actual UUID and RAID state
+  ansible.builtin.import_tasks: inspect.yml
+
+- name: Confirm that the approved array is ready
+  ansible.builtin.assert:
+    that:
+      - storage_state.md_exists
+      - storage_approval == storage_state.approval

@@ -1,0 +1,25 @@
+---
+- name: Probe the target LV independently before filesystem creation
+  ansible.builtin.import_tasks: inspect.yml
+
+- name: Create XFS only on the confirmed empty LV
+  community.general.filesystem:
+    dev: "{{ storage_state.lv_path }}"
+    fstype: xfs
+    opts: "-m uuid={{ storage_state.planned_xfs_uuid }}"
+    force: false
+    state: present
+  when: not storage_state.xfs_exists
+
+- name: Verify actual XFS type, UUID and mount conflicts
+  ansible.builtin.import_tasks: inspect.yml
+
+- name: Persist and mount the verified XFS
+  ansible.posix.mount:
+    path: "{{ storage_mountpoint }}"
+    src: "UUID={{ storage_state.planned_xfs_uuid }}"
+    fstype: xfs
+    opts: "{{ storage_mount_options }}"
+    dump: "0"
+    passno: "0"
+    state: mounted
