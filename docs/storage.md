@@ -130,6 +130,28 @@ ClickHouse, Keeper и mdmonitor запустились автоматическ�
 На каждой реплике active_replicas=2, is_readonly=0, очередь пуста.
 [Журнал проверки](../reports/storage-reboot.txt)
 
+## Уведомления mdadm
+
+На g2-dc1, g2-dc2 и g2-dc3 проверена цепочка
+mdmonitor → PROGRAM → journald. Штатный mdmonitor временно запущен с
+добавленным --test через drop-in в /run/systemd/system.
+До изменения установлен независимый таймер возврата штатного запуска.
+
+На каждой ВМ зарегистрированы TestMessage для обоих массивов с полями
+MDADM_EVENT, MDADM_ARRAY и SYSLOG_IDENTIFIER=storage-lab-mdadm.
+В журнале также есть дополнительные записи с именами /dev/md/md0 и
+/dev/md/md1. Проверка доставки подтверждена по событиям /dev/md0 и /dev/md1.
+
+После проверки временные drop-in удалены, выполнены daemon-reload и
+перезапуск mdmonitor. Служба active, DropInPaths пуст, ExecStart —
+/usr/sbin/mdadm --monitor --scan. Таймер возврата отменён после восстановления.
+UUID и состояние RAID, контрольные суммы mdadm.conf и fstab сохранились.
+ClickHouse и Keeper активны.
+
+TestMessage подтверждает локальный канал уведомлений. Обнаружение
+реального отказа и поступление событий в систему группы 1 проверяются отдельно.
+[Результаты](../reports/storage-mdmonitor.txt)
+
 ## Ресурсы
 
 На сервисную ВМ выделено 4 GiB RAM и 2 vCPU. Два экземпляра ClickHouse,
